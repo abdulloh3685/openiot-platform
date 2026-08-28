@@ -4,7 +4,7 @@ Modular, hardware-independent IoT framework with an ESP32-first implementation p
 
 ## Current status
 
-**Re-implementation v0.1.0 — Foundation/Core/HAL bootstrap**
+**Re-implementation v0.1.0 — Phase 17 validation in progress**
 
 This repository is the engineering source of truth for the new implementation line. Historical source recovery was formally closed before this implementation began.
 
@@ -40,6 +40,10 @@ The architecture is modular, event-driven, testable and designed to isolate hard
 - Portable GPIO / ADC / PWM HAL contract
 - PlatformIO ESP32 + native environments
 - Core smoke test
+
+## Phase 17 validation
+
+Phase 17 verifies the repository source, build configuration, native tests, CI workflow and evidence chain before expanding the implementation scope.
 
 ## Explicitly not claimed
 
