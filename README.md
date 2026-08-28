@@ -45,6 +45,8 @@ The architecture is modular, event-driven, testable and designed to isolate hard
 
 Phase 17 verifies the repository source, build configuration, native tests, CI workflow and evidence chain before expanding the implementation scope.
 
+The repository now contains a PlatformIO-native validation suite under `test/test_platform/` in addition to the source-level test artifacts.
+
 ## Explicitly not claimed
 
 The source in this repository is **RE-IMPLEMENTED / NEW SOURCE**. It is not represented as recovered historical source, original OF-106, or original OF-107.
