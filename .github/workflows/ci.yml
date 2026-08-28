@@ -2,7 +2,7 @@ name: OpenIoT CI
 
 on:
   push:
-    branches: [ main, 'reimplementation/**' ]
+    branches: [ main, 'reimplementation/**', 'phase-17/**' ]
   pull_request:
     branches: [ main ]
 
@@ -11,6 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: platformio/action@v2
+      - uses: platformio/action@v1
       - name: Native build and tests
         run: pio test -e native
