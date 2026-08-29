@@ -77,7 +77,14 @@ foundation::ErrorCode Scheduler::removeTask(std::uint8_t id) {
 }
 
 foundation::ErrorCode Config::begin() { initialized_ = true; return foundation::ErrorCode::Ok; }
-void Config::end() { initialized_ = false; for (auto& e : entries_) e.used = false; }
+void Config::end() {
+    initialized_ = false;
+    for (auto& e : entries_) {
+        e.key[0] = '\0';
+        e.value[0] = '\0';
+        e.used = false;
+    }
+}
 foundation::ErrorCode Config::set(const char* key, const char* value) {
     if (!initialized_) return foundation::ErrorCode::NotInitialized;
     if (!key || !value || std::strlen(key) >= sizeof(Entry::key) || std::strlen(value) >= sizeof(Entry::value)) return foundation::ErrorCode::InvalidArgument;
@@ -108,7 +115,10 @@ foundation::ErrorCode BootManager::begin() {
     if (config_.begin() != foundation::ErrorCode::Ok) return foundation::ErrorCode::InternalError;
     if (device_.begin() != foundation::ErrorCode::Ok) return foundation::ErrorCode::InternalError;
     initialized_ = true;
-    bus_.publish(Event{EventType::BootCompleted, 0});
+    Event boot_event{};
+    boot_event.type = EventType::BootCompleted;
+    boot_event.value = 0;
+    bus_.publish(boot_event);
     return foundation::ErrorCode::Ok;
 }
 void BootManager::loop() { if (initialized_) scheduler_.loop(); }
