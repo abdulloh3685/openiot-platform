@@ -16,3 +16,11 @@ void setup() {
 void loop() {
     boot.loop();
 }
+
+#ifndef ARDUINO
+int main() {
+    setup();
+    loop();
+    return 0;
+}
+#endif

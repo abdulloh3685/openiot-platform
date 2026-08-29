@@ -2,7 +2,7 @@ name: OpenIoT CI
 
 on:
   push:
-    branches: [ main, 'reimplementation/**' ]
+    branches: [ main, 'reimplementation/**', 'phase-18/**' ]
   pull_request:
     branches: [ main ]
 
@@ -11,6 +11,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: platformio/action@v2
-      - name: Native build and tests
-        run: pio test -e native
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install PlatformIO
+        run: python -m pip install --upgrade platformio
+      - name: Native build
+        run: pio run -e native
+      - name: Core smoke test
+        run: g++ -std=c++17 platform/core/src/core.cpp platform/core/test/test_core.cpp -Iplatform/foundation/include -Iplatform/core/include -o /tmp/openiot_core_smoke && /tmp/openiot_core_smoke
+
+  esp32:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install PlatformIO
+        run: python -m pip install --upgrade platformio
+      - name: ESP32 build
+        run: pio run -e esp32dev
