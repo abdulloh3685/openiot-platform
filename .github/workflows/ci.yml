@@ -2,7 +2,7 @@ name: OpenIoT CI
 
 on:
   push:
-    branches: [ main, 'reimplementation/**', 'phase-18/**', 'phase-24/**', 'phase-25/**', 'phase-26/**' ]
+    branches: [ main, 'reimplementation/**', 'phase-18/**', 'phase-24/**', 'phase-25/**', 'phase-26/**', 'phase-27/**' ]
   pull_request:
     branches: [ main ]
 
@@ -24,6 +24,8 @@ jobs:
         run: g++ -std=c++17 platform/hal/src/hal.cpp platform/hal/test/test_hal.cpp -Iplatform/foundation/include -Iplatform/hal/include -o /tmp/openiot_hal_smoke && /tmp/openiot_hal_smoke
       - name: Driver smoke test
         run: g++ -std=c++17 platform/drivers/src/drivers.cpp platform/drivers/test/test_drivers.cpp -Iplatform/foundation/include -Iplatform/drivers/include -o /tmp/openiot_driver_smoke && /tmp/openiot_driver_smoke
+      - name: Network smoke test
+        run: g++ -std=c++17 platform/network/src/network.cpp platform/network/test/test_network.cpp -Iplatform/foundation/include -Iplatform/network/include -o /tmp/openiot_network_smoke && /tmp/openiot_network_smoke
 
   esp32:
     runs-on: ubuntu-latest
