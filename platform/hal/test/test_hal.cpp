@@ -37,7 +37,7 @@ int main() {
     assert(adc.read(32).error() == ErrorCode::NotInitialized);
 
     Pwm pwm;
-    assert(pwm.set(2, 100).error() == ErrorCode::NotInitialized);
+    assert(pwm.set(2, 100) == ErrorCode::NotInitialized);
     assert(pwm.begin() == ErrorCode::Ok);
     assert(pwm.begin() == ErrorCode::AlreadyInitialized);
     assert(pwm.set(2, 0) == ErrorCode::Ok);
