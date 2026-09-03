@@ -2,7 +2,7 @@ name: OpenIoT CI
 
 on:
   push:
-    branches: [ main, 'reimplementation/**', 'phase-18/**' ]
+    branches: [ main, 'reimplementation/**', 'phase-18/**', 'phase-24/**' ]
   pull_request:
     branches: [ main ]
 
