@@ -12,8 +12,10 @@ Phase 24 hardens and validates the current **RE-IMPLEMENTED / NEW SOURCE v0.1.0*
 
 - Repository: `abdulloh3685/openiot-platform`
 - Default branch: `main`
-- Working branch: `phase-24/core-runtime-completion`
+- Phase branch: `phase-24/core-runtime-completion`
 - Baseline commit: `8ab48970c40d4f3f7424e2fcccf47cc0fd913f2a`
+- Phase implementation commit: `aff8773b0d6b108d7443b27f347fda20107865b2`
+- Merge commit on `main`: `76a11fc7d436b9951436b0c1de7110da9a8c459c`
 - Source identity: **RE-IMPLEMENTED / NEW SOURCE**
 - PKG-109: APPROVED / CLOSED
 - PKG-110: NOT CREATED
@@ -64,28 +66,27 @@ The additive `tick()` API preserves the existing `loop()` lifecycle interface wh
 Validated and hardened:
 
 - Config lifecycle and duplicate-key update
-- Config missing-key and capacity behavior
+- Config missing-key behavior
 - DeviceManager lifecycle and stable initial identity
 - BootManager lifecycle guard
 - BootManager child-module startup rollback
 - BootManager reverse-order shutdown
 
-## 24.6 Verification
+## 24.6 Verification Evidence
 
-The Core Runtime test suite covers:
+GitHub Actions run **#20** for PR #3 completed successfully:
 
-- lifecycle state transitions
-- invalid arguments
-- EventBus delivery, duplicate and unsubscribe behavior
-- Scheduler immediate and periodic execution
-- Scheduler elapsed-time boundary behavior
-- Scheduler overdue coalescing
-- Scheduler task removal
-- Config update and lookup
-- DeviceManager identity/lifecycle
-- BootManager startup/shutdown lifecycle
+- Native build: PASS
+- Core smoke test: PASS
+- ESP32 PlatformIO build: PASS
 
-The repository CI already defines native build/core smoke and ESP32 build jobs. Phase 24 changes are submitted through the dedicated phase branch and must pass the repository CI before merge. GitHub Actions workflows are the repository's automated verification mechanism.
+After merge, GitHub Actions run **#21** for `main` commit `76a11fc7d436b9951436b0c1de7110da9a8c459c` completed successfully:
+
+- Native build: PASS
+- Core smoke test: PASS
+- ESP32 PlatformIO build: PASS
+
+The deterministic Core Runtime test suite covers lifecycle, invalid arguments, EventBus delivery/duplicate/unsubscribe behavior, Scheduler immediate and periodic execution, timing boundaries, overdue coalescing, task removal, Config update/lookup, DeviceManager lifecycle/identity, and BootManager lifecycle.
 
 ## 24.7 Memory / Determinism Review
 
@@ -99,16 +100,32 @@ No change is made to the frozen layered architecture:
 
 Phase 24 is an implementation hardening phase inside Core Runtime only.
 
-## 24.9 Acceptance
+## 24.9 GitHub Integration
 
-### ACCEPTED BY ENGINEERING REVIEW
+Phase 24 was delivered through pull request **#3** and merged to `main`.
 
-- EventBus contract behavior hardened
-- Scheduler timing semantics implemented
-- Core lifecycle behavior hardened
-- Core deterministic tests expanded
+The merge commit is:
+
+`76a11fc7d436b9951436b0c1de7110da9a8c459c`
+
+The `main` branch is the current Single Source of Truth for the completed Phase 24 Core Runtime implementation.
+
+## 24.10 Final Acceptance
+
+### PASS
+
+- Repository baseline verified
+- EventBus engineering hardening
+- Scheduler timing implementation
+- Core lifecycle hardening
+- Deterministic Core Runtime tests
 - Static-storage approach preserved
-- Historical provenance preserved
+- Architecture preserved
+- Provenance preserved
+- Native CI validation
+- ESP32 CI build validation
+- Phase 24 PR merged to `main`
+- Post-merge `main` CI validation passed
 - No PKG-110 created
 
 ### REMAINING OUTSIDE PHASE 24
@@ -120,11 +137,11 @@ Phase 24 is an implementation hardening phase inside Core Runtime only.
 - long-duration field certification
 - project-wide production/LTS certification
 
-## 24.10 Gate
+## 24.11 Final Gate
 
-> **PHASE 24 CORE RUNTIME ENGINEERING GATE — READY FOR CI / PR ACCEPTANCE**
+> **PHASE 24 CORE RUNTIME ENGINEERING GATE — CLOSED / PASS**
 
-Phase 24 must not be described as project-wide production certification. It closes the Core Runtime engineering scope defined for this phase only.
+Phase 24 closes the Core Runtime engineering scope defined for this phase. It is **not** project-wide production certification.
 
 ## Provenance
 
