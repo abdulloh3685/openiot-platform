@@ -1,6 +1,7 @@
 #include <openiot/network.hpp>
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 #ifdef ARDUINO
@@ -31,9 +32,7 @@ foundation::ErrorCode WiFi::begin(const char* ssid, const char* password) {
 }
 
 foundation::ErrorCode WiFi::begin(const NetworkConfig& config) {
-    if (!validString(config.ssid) || config.password == nullptr || config.connect_timeout_ms == 0 || config.reconnect_interval_ms == 0) {
-        return foundation::ErrorCode::InvalidArgument;
-    }
+    if (!validString(config.ssid) || config.password == nullptr || config.connect_timeout_ms == 0 || config.reconnect_interval_ms == 0) return foundation::ErrorCode::InvalidArgument;
     config_ = config;
     initialized_ = true;
     state_ = ConnectionState::Down;
@@ -68,12 +67,8 @@ void WiFi::loop() {
     }
     if (state_ == ConnectionState::Connected) state_ = ConnectionState::Down;
     const auto elapsed = nowMs() - last_attempt_ms_;
-    if (state_ != ConnectionState::Connecting && elapsed >= config_.reconnect_interval_ms) {
-        (void)connect();
-    }
-    if (state_ == ConnectionState::Connecting && elapsed >= config_.connect_timeout_ms) {
-        state_ = ConnectionState::Error;
-    }
+    if (state_ != ConnectionState::Connecting && elapsed >= config_.reconnect_interval_ms) (void)connect();
+    if (state_ == ConnectionState::Connecting && elapsed >= config_.connect_timeout_ms) state_ = ConnectionState::Error;
 #endif
 }
 
@@ -108,9 +103,7 @@ foundation::ErrorCode Mqtt::begin(const char* host, std::uint16_t port) {
 }
 
 foundation::ErrorCode Mqtt::begin(const MqttConfig& config) {
-    if (!validString(config.host) || config.port == 0 || config.reconnect_interval_ms == 0) {
-        return foundation::ErrorCode::InvalidArgument;
-    }
+    if (!validString(config.host) || config.port == 0 || config.reconnect_interval_ms == 0) return foundation::ErrorCode::InvalidArgument;
     config_ = config;
     initialized_ = true;
     state_ = ConnectionState::Down;
