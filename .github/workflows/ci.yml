@@ -2,7 +2,7 @@ name: OpenIoT CI
 
 on:
   push:
-    branches: [ main, 'reimplementation/**', 'phase-18/**', 'phase-24/**' ]
+    branches: [ main, 'reimplementation/**', 'phase-18/**', 'phase-24/**', 'phase-25/**' ]
   pull_request:
     branches: [ main ]
 
@@ -20,6 +20,8 @@ jobs:
         run: pio run -e native
       - name: Core smoke test
         run: g++ -std=c++17 platform/core/src/core.cpp platform/core/test/test_core.cpp -Iplatform/foundation/include -Iplatform/core/include -o /tmp/openiot_core_smoke && /tmp/openiot_core_smoke
+      - name: HAL smoke test
+        run: g++ -std=c++17 platform/hal/src/hal.cpp platform/hal/test/test_hal.cpp -Iplatform/foundation/include -Iplatform/hal/include -o /tmp/openiot_hal_smoke && /tmp/openiot_hal_smoke
 
   esp32:
     runs-on: ubuntu-latest
