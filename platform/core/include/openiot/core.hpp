@@ -46,10 +46,17 @@ public:
     void end() override;
     foundation::Result<std::uint8_t> registerTask(Task task, void* context, std::uint32_t period_ms);
     foundation::ErrorCode removeTask(std::uint8_t id);
+
+    // Deterministic scheduler step for tests and cooperative runtimes.
+    // A periodic task executes at most once per tick; overdue time is coalesced.
+    void tick(std::uint32_t elapsed_ms);
+
 private:
     struct Slot { Task task{nullptr}; void* context{nullptr}; std::uint32_t period{0}; std::uint32_t elapsed{0}; bool used{false}; };
     std::array<Slot, kMaxTasks> tasks_{};
     bool initialized_{false};
+    bool clock_started_{false};
+    std::uint32_t last_tick_ms_{0};
 };
 
 class Config final : public foundation::IModule {
@@ -83,7 +90,7 @@ public:
         : logger_(logger), bus_(bus), scheduler_(scheduler), config_(config), device_(device) {}
     foundation::ErrorCode begin() override;
     void loop() override;
-    void end() override { initialized_ = false; }
+    void end() override;
 private:
     Logger& logger_; EventBus& bus_; Scheduler& scheduler_; Config& config_; DeviceManager& device_; bool initialized_{false};
 };
