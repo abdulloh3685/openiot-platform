@@ -9,14 +9,14 @@
 
 int main() {
     openiot::core::EventBus bus;
-    openiot::drivers::SoilMoisture soil(32);
-    openiot::drivers::Relay relay(25);
+    openiot::drivers::SoilMoisture soil;
+    openiot::drivers::Relay relay;
     openiot::products::SmartFarming farming(bus, soil, relay);
     openiot::network::Mqtt mqtt;
 
     assert(bus.begin() == openiot::foundation::ErrorCode::Ok);
-    assert(soil.begin() == openiot::foundation::ErrorCode::Ok);
-    assert(relay.begin() == openiot::foundation::ErrorCode::Ok);
+    assert(soil.begin(32) == openiot::foundation::ErrorCode::Ok);
+    assert(relay.begin(25) == openiot::foundation::ErrorCode::Ok);
     assert(farming.begin() == openiot::foundation::ErrorCode::Ok);
     assert(mqtt.begin("broker.test", 1883) == openiot::foundation::ErrorCode::Ok);
 
@@ -43,8 +43,6 @@ int main() {
 
     mqtt.end();
     farming.end();
-    relay.end();
-    soil.end();
     bus.end();
     return 0;
 }
