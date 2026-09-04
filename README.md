@@ -4,7 +4,7 @@ Modular, hardware-independent IoT framework with an ESP32-first implementation p
 
 ## Current status
 
-**Re-implementation v0.1.0 — Foundation/Core/HAL bootstrap**
+**Re-implementation v0.1.0 — Phase 30 CLOSED / Phase 31 Physical Validation PREPARATION**
 
 This repository is the engineering source of truth for the new implementation line. Historical source recovery was formally closed before this implementation began.
 
@@ -39,7 +39,8 @@ The architecture is modular, event-driven, testable and designed to isolate hard
 - DeviceManager identity contract
 - Portable GPIO / ADC / PWM HAL contract
 - PlatformIO ESP32 + native environments
-- Core smoke test
+- Core, HAL, Driver, Network, Smart Farming, telemetry, integration and stress smoke validation
+- ESP32 PlatformIO build gate
 
 ## Explicitly not claimed
 
@@ -55,4 +56,12 @@ The source in this repository is **RE-IMPLEMENTED / NEW SOURCE**. It is not repr
 6. Integration, stress, field validation
 7. Release hardening
 
-See `docs/PROVENANCE.md` and `docs/ENGINEERING_DECISIONS.md` for lineage and implementation decisions.
+### Current Gate
+
+Phase 30 — Integration & Stress Validation: **CLOSED / PASS**
+
+Phase 31 — Physical ESP32 / Smart Farming Field Validation: **PREPARATION / HARDWARE EVIDENCE GATE**
+
+Physical validation is not inferred from CI. Real-board, sensor, actuator, Wi-Fi, MQTT, safety, and stability claims require evidence from the physical test setup.
+
+See `docs/PHASE_30_FINAL_STATUS.md`, `docs/PHASE_31_FIELD_VALIDATION_CONTRACT.md`, `docs/PROVENANCE.md`, and `docs/ENGINEERING_DECISIONS.md`.
