@@ -2,7 +2,7 @@ name: OpenIoT CI
 
 on:
   push:
-    branches: [ main, 'reimplementation/**', 'phase-18/**', 'phase-24/**', 'phase-25/**', 'phase-26/**', 'phase-27/**', 'phase-28/**', 'phase-29/**' ]
+    branches: [ main, 'reimplementation/**', 'phase-18/**', 'phase-24/**', 'phase-25/**', 'phase-26/**', 'phase-27/**', 'phase-28/**', 'phase-29/**', 'phase-30/**' ]
   pull_request:
     branches: [ main ]
 
@@ -30,6 +30,8 @@ jobs:
         run: g++ -std=c++17 platform/core/src/core.cpp platform/drivers/src/drivers.cpp products/smart-farming/src/smart_farming.cpp products/smart-farming/test/test_smart_farming.cpp -Iplatform/foundation/include -Iplatform/core/include -Iplatform/drivers/include -Iproducts/smart-farming/include -o /tmp/openiot_smart_farming_smoke && /tmp/openiot_smart_farming_smoke
       - name: Smart Farming telemetry smoke test
         run: g++ -std=c++17 platform/core/src/core.cpp platform/drivers/src/drivers.cpp platform/network/src/network.cpp products/smart-farming/src/smart_farming.cpp products/smart-farming/src/smart_farming_telemetry.cpp products/smart-farming/test/test_smart_farming_telemetry.cpp -Iplatform/foundation/include -Iplatform/core/include -Iplatform/drivers/include -Iplatform/network/include -Iproducts/smart-farming/include -o /tmp/openiot_smart_farming_telemetry_smoke && /tmp/openiot_smart_farming_telemetry_smoke
+      - name: Integration and stress smoke test
+        run: g++ -std=c++17 platform/core/src/core.cpp platform/drivers/src/drivers.cpp platform/network/src/network.cpp products/smart-farming/src/smart_farming.cpp products/smart-farming/src/smart_farming_telemetry.cpp products/smart-farming/test/test_integration.cpp -Iplatform/foundation/include -Iplatform/core/include -Iplatform/drivers/include -Iplatform/network/include -Iproducts/smart-farming/include -o /tmp/openiot_integration_smoke && /tmp/openiot_integration_smoke
 
   esp32:
     runs-on: ubuntu-latest

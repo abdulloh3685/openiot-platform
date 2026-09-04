@@ -22,7 +22,6 @@ void scheduledTask(void*) { ++scheduler_ticks; }
 int main() {
     using namespace openiot;
 
-    // Integration path: Core -> Drivers -> Smart Farming -> Network telemetry.
     core::EventBus bus;
     core::Scheduler scheduler;
     core::Logger logger;
@@ -32,8 +31,8 @@ int main() {
 
     assert(boot.begin() == foundation::ErrorCode::Ok);
     assert(boot.begin() == foundation::ErrorCode::AlreadyInitialized);
-
     assert(bus.subscribe(core::EventType::Sensor, onSensor) == foundation::ErrorCode::Ok);
+
     auto task = scheduler.registerTask(scheduledTask, nullptr, 100);
     assert(task.ok());
 
@@ -51,7 +50,6 @@ int main() {
     assert(telemetry.begin() == foundation::ErrorCode::Ok);
     mqtt.simulateConnected(true);
 
-    // Exercise the cooperative path repeatedly; no heap-backed test fixtures are used.
     for (std::uint32_t i = 0; i < 1000; ++i) {
         scheduler.tick(1);
         farming.loop();
@@ -65,7 +63,6 @@ int main() {
     assert(std::strstr(telemetry.lastPayload(), "\"soil_raw\":0") != nullptr);
     assert(std::strstr(telemetry.lastPayload(), "\"pump_on\":true") != nullptr);
 
-    // Simulate network loss: telemetry must stop publishing without affecting the product loop.
     mqtt.simulateConnected(false);
     const auto published_before_loss = telemetry.publishCount();
     farming.loop();
@@ -74,7 +71,6 @@ int main() {
     assert(sensor_events == 1001);
     assert(telemetry.publishCount() == published_before_loss);
 
-    // Lifecycle recovery: tear down and rebuild the product/network path repeatedly.
     for (int cycle = 0; cycle < 10; ++cycle) {
         telemetry.end();
         farming.end();
@@ -95,8 +91,9 @@ int main() {
     telemetry.end();
     farming.end();
     mqtt.end();
-    bus.unsubscribe(core::EventType::Sensor, onSensor);
+    assert(bus.unsubscribe(core::EventType::Sensor, onSensor) == foundation::ErrorCode::Ok);
     boot.end();
-    assert(!boot.begin() == false); // keep the final lifecycle check explicit below
+    assert(boot.begin() == foundation::ErrorCode::Ok);
+    boot.end();
     return 0;
 }
