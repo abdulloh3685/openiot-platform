@@ -2,11 +2,11 @@
 
 ## Status
 
-**HARDWARE WIRING VERIFIED / RELAY FUNCTION VERIFIED**
+**HARDWARE WIRING VERIFIED / SENSOR SAMPLING VERIFIED / RELAY FUNCTION VERIFIED**
 
 This report records the physical Smart Farming prototype wiring and the hardware operation verified during the Phase 31 field test.
 
-> This report records only evidence actually observed/reported during the current hardware test. Items requiring serial logs, measured values, network tests, or extended stability evidence remain open unless separately recorded.
+> This report records only evidence actually observed/reported during the current hardware test. Items requiring network tests, calibrated moisture percentage, functional threshold control, or extended stability evidence remain open unless separately recorded.
 
 ## 1. Platform Baseline
 
@@ -75,6 +75,18 @@ The firmware uses safe startup behavior so that relay outputs are driven HIGH du
 - [PASS] Relay supply uses regulated 5 V.
 - [PASS] Relay ground and ESP32 ground are common.
 
+### Sensor Sampling
+
+- [PASS] DHT22 initialized successfully with ErrorCode=0.
+- [PASS] Soil-moisture ADC initialized successfully with ErrorCode=0.
+- [PASS] Repeated physical DHT22 readings were captured in the uploaded serial log.
+- [PASS] Observed DHT22 values were approximately 24.2–24.3 °C and 63.4–63.6 %RH.
+- [PASS] No DHT22 failure record was observed in the uploaded serial log.
+- [PASS] Repeated soil ADC readings were captured on GPIO 34.
+- [PASS] Observed soil raw ADC values were approximately 2990–3170 in the uploaded serial log.
+
+> The soil ADC result is recorded as raw ADC evidence only. A calibrated moisture percentage is not inferred from these values.
+
 ### Relay Operation
 
 - [PASS] Relay module operates on the physical ESP32 setup.
@@ -91,17 +103,16 @@ The firmware uses safe startup behavior so that relay outputs are driven HIGH du
 
 ## 5. Evidence
 
-Physical hardware was connected and tested on the ESP32 prototype. The user confirmed that the connected hardware operates correctly.
+The uploaded serial log records successful boot/HAL/sensor/relay initialization and repeated DHT22 and soil ADC samples. Physical hardware was connected and tested on the ESP32 prototype, and the user confirmed that the connected relay hardware operates correctly.
 
-Supporting evidence includes the physical prototype photograph captured during this validation session.
+The working firmware source used for this validation has now been identified as the source of truth for the physical DHT22, soil ADC, and active-low relay behavior being migrated into the repository.
 
 ## 6. Validation Boundary
 
 The existing Phase 31 validation contract covers additional physical tests including:
 
-- DHT22 measurement validation with recorded readings/logs.
 - DS18B20 validation.
-- Soil-moisture measurement validation with recorded values.
+- Soil-moisture calibration and moisture-percentage validation.
 - Smart Farming threshold/control behavior.
 - EventBus sensor path.
 - Wi-Fi association.
@@ -127,21 +138,34 @@ The current hardware wiring is treated as the Smart Farming prototype wiring ref
 
 ## 9. Result
 
-**Phase 31 Hardware Wiring / Relay Validation: PASS**
+**Phase 31 Hardware Wiring / Sensor Sampling / Relay Validation: PASS**
 
 **Overall Phase 31 Contract: OPEN until the remaining required physical evidence is collected and recorded.**
 
 This distinction is intentional: verified hardware behavior is recorded as PASS without converting untested items into a false overall PASS.
 
-## 10. Next Action
+## 10. Repository Reconciliation
+
+The physical firmware source used during the validation exposed an important repository-baseline discrepancy: the previous `main` branch contained stub Driver implementations for DHT22, soil ADC, and relay behavior.
+
+The reconciled repository implementation now records:
+
+- DHT22 physical read through `DHT.h` on GPIO 4.
+- Soil raw ADC read through `analogRead()` on GPIO 34.
+- Active-low relay output with safe OFF startup behavior.
+- Physical pin map matching the validated prototype.
+- PlatformIO dependency declaration for the DHT sensor library required by the physical DHT22 implementation.
+
+No new architecture, PKG, or Phase is created by this reconciliation.
+
+## 11. Next Action
 
 Continue physical validation from the remaining Phase 31 contract items, prioritizing:
 
-1. DHT22 reading evidence.
-2. Soil-moisture ADC reading evidence.
-3. Relay safe-state verification during boot/shutdown.
-4. Smart Farming control-path validation.
-5. Network/MQTT physical validation when the network test setup is ready.
-6. Stability/restart evidence.
+1. Smart Farming control-path validation using the existing threshold contract.
+2. Relay safe-state verification during boot/shutdown.
+3. EventBus sensor-path evidence.
+4. Network/MQTT physical validation when the network test setup is ready.
+5. Stability/restart evidence.
 
 No new architecture or PKG is created by this report.
