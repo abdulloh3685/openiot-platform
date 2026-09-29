@@ -1,0 +1,11 @@
+{
+  "name": "OpenIoT Foundation",
+  "version": "0.1.0",
+  "description": "OpenIoT Foundation layer",
+  "frameworks": "*",
+  "platforms": "*",
+  "build": {
+    "includeDir": "include",
+    "srcDir": "src"
+  }
+}
