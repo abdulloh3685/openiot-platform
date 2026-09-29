@@ -1,0 +1,11 @@
+{
+  "name": "OpenIoT Network",
+  "version": "0.1.0",
+  "description": "OpenIoT network layer",
+  "frameworks": "*",
+  "platforms": "*",
+  "build": {
+    "includeDir": "include",
+    "srcDir": "src"
+  }
+}
