@@ -28,6 +28,13 @@ constexpr std::uint8_t kSoilMoisturePin = 34;
 constexpr std::uint32_t kSensorSampleIntervalMs = 2500;
 constexpr std::uint8_t kRelayPins[] = {26, 32, 33, 25};
 constexpr std::size_t kSmartFarmingPumpRelayIndex = 0;
+
+void onSmartFarmingSensorEvent(const core::Event& event) {
+#ifdef ARDUINO
+    Serial.print("[SMART-FARMING-EVENT] Sensor raw_adc=");
+    Serial.println(event.value);
+#endif
+}
 }
 
 static products::SmartFarming smart_farming(
@@ -61,6 +68,16 @@ void setup()
 #endif
 
     if (boot_result == foundation::ErrorCode::Ok) {
+        const foundation::ErrorCode event_subscribe_result =
+            event_bus.subscribe(core::EventType::Sensor, onSmartFarmingSensorEvent);
+#ifdef ARDUINO
+        Serial.print("[EVENTBUS-SENSOR] subscribe ErrorCode=");
+        Serial.println(static_cast<unsigned int>(event_subscribe_result));
+#endif
+        if (event_subscribe_result != foundation::ErrorCode::Ok) {
+            logger.error("Smart Farming EventBus subscription FAILED");
+        }
+
 #ifdef ARDUINO
         Serial.println("[HAL-01] Starting safe HAL readiness validation");
 #endif
@@ -179,22 +196,18 @@ void loop()
             Serial.println(static_cast<unsigned int>(dht_reading.error()));
         }
 
-        const auto soil_reading = soil_moisture.readRaw();
-        if (soil_reading.ok()) {
-            Serial.print("[SOIL] raw_adc=");
-            Serial.println(soil_reading.value());
-        } else {
-            Serial.print("[SOIL-FAIL] ErrorCode=");
-            Serial.println(static_cast<unsigned int>(soil_reading.error()));
-        }
     }
 
     static std::uint32_t last_farming_sample_ms = 0;
     const std::uint32_t farming_now = static_cast<std::uint32_t>(millis());
     if (farming_now - last_farming_sample_ms >= kSensorSampleIntervalMs) {
         last_farming_sample_ms = farming_now;
+        const std::uint32_t sample_count_before = smart_farming.sampleCount();
         smart_farming.loop();
-        Serial.print("[SMART-FARMING] soil_raw=");
+        if (smart_farming.sampleCount() == sample_count_before) {
+            Serial.println("[SMART-FARMING-FAIL] Soil sample was not accepted");
+        }
+        Serial.print("[SOIL] raw_adc=");
         Serial.print(smart_farming.lastSoilRaw());
         Serial.print(" threshold=");
         Serial.print(smart_farming.threshold());
