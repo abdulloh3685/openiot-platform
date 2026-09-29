@@ -1,0 +1,11 @@
+{
+  "name": "OpenIoT Drivers",
+  "version": "0.1.0",
+  "description": "OpenIoT device driver layer",
+  "frameworks": "*",
+  "platforms": "*",
+  "build": {
+    "includeDir": "include",
+    "srcDir": "src"
+  }
+}
