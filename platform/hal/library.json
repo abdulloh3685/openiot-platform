@@ -1,0 +1,11 @@
+{
+  "name": "OpenIoT HAL",
+  "version": "0.1.0",
+  "description": "OpenIoT Hardware Abstraction Layer",
+  "frameworks": "*",
+  "platforms": "*",
+  "build": {
+    "includeDir": "include",
+    "srcDir": "src"
+  }
+}
