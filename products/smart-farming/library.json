@@ -1,0 +1,11 @@
+{
+  "name": "OpenIoT Smart Farming",
+  "version": "0.1.0",
+  "description": "OpenIoT Smart Farming product module",
+  "frameworks": "*",
+  "platforms": "*",
+  "build": {
+    "includeDir": "include",
+    "srcDir": "src"
+  }
+}
