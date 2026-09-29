@@ -24,7 +24,11 @@ void SmartFarming::loop() {
     if (relay_.set(requested_pump_state) != foundation::ErrorCode::Ok) return;
 
     pump_on_ = requested_pump_state;
-    (void)bus_.publish({core::EventType::Sensor, reading.value()});
+    const core::Event sensor_event{
+        core::EventType::Sensor,
+        reading.value()
+    };
+    (void)bus_.publish(sensor_event);
 }
 
 void SmartFarming::end() {
