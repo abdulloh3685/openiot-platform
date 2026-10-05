@@ -36,10 +36,9 @@ void SmartFarming::loop() {
     ++sample_count_;
 
     const std::uint16_t raw = reading.value();
-    const core::Event sensor_event{
-        core::EventType::Sensor,
-        raw
-    };
+    core::Event sensor_event{};
+    sensor_event.type = core::EventType::Sensor;
+    sensor_event.value = raw;
     (void)bus_.publish(sensor_event);
 
     if (!isValidSoilReading(raw)) {
