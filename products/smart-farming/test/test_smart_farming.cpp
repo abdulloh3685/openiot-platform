@@ -29,18 +29,20 @@ int main() {
     assert(farming.begin() == openiot::foundation::ErrorCode::Ok);
     assert(farming.begin() == openiot::foundation::ErrorCode::AlreadyInitialized);
     assert(farming.initialized());
-    assert(farming.threshold() == 2000);
+    assert(farming.threshold() == 2600);
 
+    // Native SoilMoisture currently returns 0 as its platform-neutral stub.
+    // Smart Farming must fail safe: invalid sensor data keeps the pump OFF.
     farming.loop();
 
     assert(farming.sampleCount() == 1);
     assert(farming.lastSoilRaw() == 0);
-    assert(farming.pumpOn());
-    assert(relay.state());
+    assert(!farming.pumpOn());
+    assert(!relay.state());
     assert(sensor_events == 1);
     assert(last_sensor_value == 0);
 
-    farming.setThreshold(0);
+    farming.setThreshold(3000);
     farming.loop();
     assert(farming.sampleCount() == 2);
     assert(!farming.pumpOn());
