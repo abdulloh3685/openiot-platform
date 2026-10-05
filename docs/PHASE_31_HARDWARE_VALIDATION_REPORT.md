@@ -2,11 +2,11 @@
 
 ## Status
 
-**HARDWARE WIRING VERIFIED / SENSOR SAMPLING VERIFIED / RELAY FUNCTION VERIFIED**
+**HARDWARE WIRING VERIFIED / SENSOR SAMPLING VERIFIED / RELAY FUNCTION VERIFIED / CONTROL CALIBRATION BASELINE RECORDED**
 
-This report records the physical Smart Farming prototype wiring and the hardware operation verified during the Phase 31 field test.
+This report records the physical Smart Farming prototype wiring, hardware operation, sensor calibration evidence, and the current Smart Farming control baseline verified or derived from the Phase 31 field tests.
 
-> This report records only evidence actually observed/reported during the current hardware test. Items requiring network tests, calibrated moisture percentage, functional threshold control, or extended stability evidence remain open unless separately recorded.
+> Overall Phase 31 remains OPEN. Network/MQTT, stability, and final end-to-end control evidence are not marked PASS until their corresponding physical measurements and logs are captured.
 
 ## 1. Platform Baseline
 
@@ -80,12 +80,10 @@ The firmware uses safe startup behavior so that relay outputs are driven HIGH du
 - [PASS] DHT22 initialized successfully with ErrorCode=0.
 - [PASS] Soil-moisture ADC initialized successfully with ErrorCode=0.
 - [PASS] Repeated physical DHT22 readings were captured in the uploaded serial log.
-- [PASS] Observed DHT22 values were approximately 24.2–24.3 °C and 63.4–63.6 %RH.
-- [PASS] No DHT22 failure record was observed in the uploaded serial log.
+- [PASS] Observed DHT22 values were approximately 24.2–24.3 °C and 63.4–63.6 %RH in the referenced log.
+- [PASS] No DHT22 failure record was observed in the referenced serial log.
 - [PASS] Repeated soil ADC readings were captured on GPIO 34.
-- [PASS] Observed soil raw ADC values were approximately 2990–3170 in the uploaded serial log.
-
-> The soil ADC result is recorded as raw ADC evidence only. A calibrated moisture percentage is not inferred from these values.
+- [PASS] Soil ADC physical sampling is operational.
 
 ### Relay Operation
 
@@ -93,79 +91,172 @@ The firmware uses safe startup behavior so that relay outputs are driven HIGH du
 - [PASS] Four-channel relay wiring is operational.
 - [PASS] Active-Low polarity is confirmed.
 - [PASS] Safe startup configuration is implemented.
+- [PASS] Relay CH1 was confirmed by the user as the Smart Farming pump relay and physically actuates.
 
 ### Firmware Build
 
-- [PASS] Firmware build completed successfully.
-- Reported build resource usage:
+- [PASS] A firmware build completed successfully before the current control-logic change.
+- Previously reported resource usage:
   - RAM: 7.6%
   - Flash: 21.7%
+- The current control-logic revision requires a new build before it can be recorded as build-validated.
 
-## 5. Evidence
+## 5. Soil Calibration Evidence
 
-The uploaded serial log records successful boot/HAL/sensor/relay initialization and repeated DHT22 and soil ADC samples. Physical hardware was connected and tested on the ESP32 prototype, and the user confirmed that the connected relay hardware operates correctly.
+The field calibration was performed using real soil states rather than converting raw ADC directly into a universal moisture percentage.
 
-The working firmware source used for this validation has now been identified as the source of truth for the physical DHT22, soil ADC, and active-low relay behavior being migrated into the repository.
+### Previously recorded soil states
 
-## 6. Validation Boundary
+| Soil state | Observed raw ADC range | Approx. center |
+|---|---:|---:|
+| Very dry | 2924–2959 | ~2940 |
+| Considered needs watering | 2671–2816 | ~2714 |
+| Moist enough | 2384–2493 | ~2465 |
+| Very wet | 2169–2208 | ~2188 |
 
-The existing Phase 31 validation contract covers additional physical tests including:
+These values establish the observed direction:
+
+**Higher raw ADC = drier soil. Lower raw ADC = wetter soil.**
+
+### Boundary calibration
+
+| Calibration point | Samples | Min | Max | Mean | Median |
+|---|---:|---:|---:|---:|---:|
+| ~2500 | 23 | 2503 | 2529 | 2515.5 | 2515 |
+| ~2550 | 23 | 2511 | 2668 | 2575.3 | 2581 |
+| ~2600 | 23 | 2606 | 2635 | 2622.9 | 2624 |
+| ~2650 | 23 | 2599 | 2765 | 2692.9 | 2690 |
+
+The ~2500 and ~2600 groups were comparatively tight. The ~2550 and ~2650 groups contained outliers, so averages alone are not used to select the control boundary.
+
+### Sensor-fault evidence
+
+A separate sensor-unpowered test produced raw ADC values approximately **343–379**.
+
+This must not be interpreted as wet soil. It is treated as an invalid/fault reading for the control path.
+
+## 6. Smart Farming Control Baseline
+
+The current implementation uses the following field-calibrated candidate baseline:
+
+- Pump ON threshold: **2600 ADC**
+- Pump OFF threshold: **2500 ADC**
+- Hysteresis band: **2501–2599 ADC**
+- Valid soil operating guard band: **1000–3200 ADC**
+- Invalid/out-of-band sensor reading: **Pump OFF**
+
+Control semantics:
+
+```text
+raw >= 2600       -> Pump ON
+raw <= 2500       -> Pump OFF
+2501..2599        -> Keep previous pump state
+raw < 1000       -> Sensor invalid -> Pump OFF
+raw > 3200       -> Sensor invalid -> Pump OFF
+```
+
+The 1000–3200 validity guard is a conservative engineering guard band derived from the observed field data: the recorded sensor-fault values were below 400 ADC, while recorded real-soil values were approximately 2169–2959 ADC. It is a prototype safety boundary, not a universal sensor specification.
+
+The public `SmartFarming::setThreshold()` API is retained. Its default value is now the pump-ON boundary of 2600 ADC. The pump-OFF boundary remains 2500 ADC to provide hysteresis.
+
+## 7. Safety Behavior
+
+The control path is explicitly fail-safe:
+
+```text
+Sensor read failure
+       |
+       v
+   Pump OFF
+
+Invalid/out-of-band ADC
+       |
+       v
+   Pump OFF
+
+Normal valid reading
+       |
+       +--> ADC >= 2600 -> Pump ON
+       |
+       +--> ADC <= 2500 -> Pump OFF
+       |
+       +--> 2501..2599 -> Keep previous state
+```
+
+This corrects the previously observed unsafe behavior where an unpowered sensor reading around 363 ADC could cause Pump ON under the earlier low-ADC threshold logic.
+
+## 8. EventBus Evidence
+
+- [PASS] EventBus Sensor subscription was observed with ErrorCode=0.
+- [PASS] Physical serial evidence showed `[SMART-FARMING-EVENT] Sensor raw_adc=...`.
+- Sensor events remain observable for accepted raw readings, including invalid readings, while actuator control applies the fail-safe validity gate.
+
+## 9. Validation Boundary
+
+The existing Phase 31 validation contract still covers:
 
 - DS18B20 validation.
-- Soil-moisture calibration and moisture-percentage validation.
-- Smart Farming threshold/control behavior.
-- EventBus sensor path.
+- Final Smart Farming threshold/control physical validation using the current baseline.
+- Relay safe-state verification during shutdown/restart.
 - Wi-Fi association.
 - MQTT connectivity and telemetry.
 - Network-loss recovery.
-- Repeated boot/restart and stability testing.
+- Repeated boot/restart and stability.
 
-Those items are **not marked PASS by this report unless their corresponding measurements, logs, or test records are captured separately**.
+These items are **not marked PASS by this report unless their corresponding measurements, logs, or test records are captured separately**.
 
-## 7. Safety
+## 10. Safety
 
 Relay testing is performed with the prototype hardware. Mains-voltage loads must not be connected unless an appropriate isolated and electrically safe test environment is used.
 
-## 8. Architecture Compliance
+## 11. Architecture Compliance
 
-No architecture change is introduced by this validation.
+No architecture change is introduced by this control revision.
 
 The frozen architecture remains:
 
 `Application → SDK → Services / Network → Core Runtime → HAL → Platform → Hardware`
 
-The current hardware wiring is treated as the Smart Farming prototype wiring reference.
+The current hardware wiring remains the Smart Farming prototype wiring reference.
 
-## 9. Result
+No new package, phase, or architecture layer is introduced.
 
-**Phase 31 Hardware Wiring / Sensor Sampling / Relay Validation: PASS**
+## 12. Repository Reconciliation
 
-**Overall Phase 31 Contract: OPEN until the remaining required physical evidence is collected and recorded.**
-
-This distinction is intentional: verified hardware behavior is recorded as PASS without converting untested items into a false overall PASS.
-
-## 10. Repository Reconciliation
-
-The physical firmware source used during the validation exposed an important repository-baseline discrepancy: the previous `main` branch contained stub Driver implementations for DHT22, soil ADC, and relay behavior.
-
-The reconciled repository implementation now records:
+The reconciled repository implementation records:
 
 - DHT22 physical read through `DHT.h` on GPIO 4.
 - Soil raw ADC read through `analogRead()` on GPIO 34.
 - Active-low relay output with safe OFF startup behavior.
 - Physical pin map matching the validated prototype.
-- PlatformIO dependency declaration for the DHT sensor library required by the physical DHT22 implementation.
+- PlatformIO dependency declaration for the DHT sensor library.
+- Smart Farming control using high-ADC=dry semantics.
+- Hysteresis between pump ON and pump OFF boundaries.
+- Fail-safe Pump OFF for sensor read failures and out-of-band readings.
 
-No new architecture, PKG, or Phase is created by this reconciliation.
+## 13. Result
 
-## 11. Next Action
+**Physical Wiring / Sensor Sampling / Relay Validation: PASS**
 
-Continue physical validation from the remaining Phase 31 contract items, prioritizing:
+**Calibration Evidence: RECORDED**
 
-1. Smart Farming control-path validation using the existing threshold contract.
-2. Relay safe-state verification during boot/shutdown.
-3. EventBus sensor-path evidence.
-4. Network/MQTT physical validation when the network test setup is ready.
-5. Stability/restart evidence.
+**Control Baseline: IMPLEMENTED — PHYSICAL RE-VALIDATION REQUIRED**
 
-No new architecture or PKG is created by this report.
+**Overall Phase 31 Contract: OPEN**
+
+The control revision must be built and then physically validated against real soil states before the Smart Farming control path can be marked PASS.
+
+## 14. Next Action
+
+1. Build the revised firmware.
+2. Run native Smart Farming smoke test.
+3. Flash ESP32.
+4. Verify startup leaves CH1/Pump OFF.
+5. Test dry soil: raw >= 2600 -> CH1/Pump ON.
+6. Test moist soil: raw <= 2500 -> CH1/Pump OFF.
+7. Test hysteresis region 2501–2599 -> state remains stable.
+8. Test sensor-unpowered/fault condition -> Pump OFF.
+9. Capture serial evidence.
+10. Record the physical result and then continue Wi-Fi/MQTT/stability validation.
+
+No new architecture, PKG, or Phase is created by this control revision.
