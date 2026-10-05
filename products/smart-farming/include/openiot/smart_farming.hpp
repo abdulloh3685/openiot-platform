@@ -15,6 +15,7 @@ public:
     void loop() override;
     void end() override;
 
+    // The public threshold remains the pump-ON boundary for API compatibility.
     void setThreshold(std::uint16_t threshold) { threshold_ = threshold; }
     std::uint16_t threshold() const { return threshold_; }
     std::uint16_t lastSoilRaw() const { return last_soil_raw_; }
@@ -26,7 +27,7 @@ private:
     core::EventBus& bus_;
     drivers::SoilMoisture& soil_;
     drivers::Relay& relay_;
-    std::uint16_t threshold_{2000};
+    std::uint16_t threshold_{2600};
     std::uint16_t last_soil_raw_{0};
     std::uint32_t sample_count_{0};
     bool pump_on_{false};
