@@ -62,6 +62,14 @@ The four relay channels were confirmed as **Active-Low**.
 
 The firmware uses safe startup behavior so that relay outputs are driven HIGH during initialization, keeping all relay channels OFF at startup.
 
+## 3.1 Firmware Identity Evidence
+
+The project now uses the active `docs/FIRMWARE_IDENTITY_STANDARD.md` for physical firmware identification.
+
+For every Phase 31 hardware run, the Serial Monitor capture should retain the boot identity banner containing Product, Version, Build, Git Commit, Git State, Build Date/Time, PlatformIO Environment, and Board before the functional validation log.
+
+The current implementation derives the build/revision metadata at host-side build time and does not add a runtime Git dependency.
+
 ## 4. Physical Validation Result
 
 ### Wiring
