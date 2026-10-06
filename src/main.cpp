@@ -7,6 +7,23 @@
 #include <openiot/hal.hpp>
 #include <openiot/smart_farming.hpp>
 
+#ifndef OPENIOT_BUILD_NUMBER
+#define OPENIOT_BUILD_NUMBER 0
+#endif
+
+#ifndef OPENIOT_GIT_COMMIT
+#define OPENIOT_GIT_COMMIT "unknown"
+#endif
+
+#ifndef OPENIOT_GIT_STATE
+#define OPENIOT_GIT_STATE "unknown"
+#endif
+
+#ifndef OPENIOT_BUILD_ENV
+#define OPENIOT_BUILD_ENV "unknown"
+#endif
+
+
 using namespace openiot;
 
 static core::Logger logger;
@@ -47,10 +64,32 @@ void setup()
     delay(500);
 
     Serial.println();
-    Serial.println("================================");
-    Serial.println(" OpenIoT Framework");
-    Serial.println(" Logger Validation");
-    Serial.println("================================");
+    Serial.println("============================================================");
+    Serial.println(" OpenIoT Platform - Firmware Identity");
+    Serial.println("------------------------------------------------------------");
+    Serial.print(" Product      : ");
+    Serial.println("OpenIoT Smart Farming");
+    Serial.print(" Version      : ");
+    Serial.print(foundation::kFrameworkVersion.major);
+    Serial.print(".");
+    Serial.print(foundation::kFrameworkVersion.minor);
+    Serial.print(".");
+    Serial.println(foundation::kFrameworkVersion.patch);
+    Serial.print(" Build        : #");
+    Serial.println(OPENIOT_BUILD_NUMBER);
+    Serial.print(" Git Commit   : ");
+    Serial.println(OPENIOT_GIT_COMMIT);
+    Serial.print(" Git State    : ");
+    Serial.println(OPENIOT_GIT_STATE);
+    Serial.print(" Build Date   : ");
+    Serial.println(__DATE__);
+    Serial.print(" Build Time   : ");
+    Serial.println(__TIME__);
+    Serial.print(" Environment  : ");
+    Serial.println(OPENIOT_BUILD_ENV);
+    Serial.print(" Board        : ");
+    Serial.println("ESP32 DevKitC V4 / ESP32 Dev Module");
+    Serial.println("============================================================");
     Serial.println("[BOOT-01] setup entered");
     Serial.println("[BOOT-02] before boot.begin()");
 #endif
