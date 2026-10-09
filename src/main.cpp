@@ -247,8 +247,7 @@ void loop()
             case network::ConnectionState::Down: Serial.println("DOWN"); break;
             case network::ConnectionState::Connecting: Serial.println("CONNECTING"); break;
             case network::ConnectionState::Connected:
-                Serial.print("CONNECTED ip=");
-                Serial.println(WiFi.localIP());
+                Serial.println("CONNECTED");
                 break;
             case network::ConnectionState::Error: Serial.println("ERROR"); break;
         }
