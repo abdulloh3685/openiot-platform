@@ -103,6 +103,7 @@ void setup()
     Serial.println("[BOOT-02] before boot.begin()");
 #endif
 
+#ifdef ARDUINO
 #if OPENIOT_WIFI_SECRETS_AVAILABLE
     const foundation::ErrorCode wifi_config_result =
         wifi.begin(OPENIOT_WIFI_SSID, OPENIOT_WIFI_PASSWORD);
@@ -117,6 +118,7 @@ void setup()
 #else
     Serial.println("[NETWORK-WIFI] DISABLED: local network_secrets.hpp not found");
     Serial.println("[NETWORK-WIFI] copy network_secrets.example.hpp to network_secrets.hpp and set local Wi-Fi credentials");
+#endif
 #endif
 
     const foundation::ErrorCode boot_result = boot.begin();
