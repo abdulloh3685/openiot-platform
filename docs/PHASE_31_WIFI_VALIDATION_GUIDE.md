@@ -34,14 +34,38 @@ This step validates Wi-Fi only, using the existing `platform/network` module and
 
 If the log says `DISABLED: local network_secrets.hpp not found`, create the local file from the example. Do not rename or commit the actual credentials file.
 
+## Validation record — 2026-10-12
+
+### Build
+
+- PlatformIO environment: `esp32dev`.
+- Result: PASS, as reported from the user's local PlatformIO build.
+- RAM: 24,776 / 327,680 bytes (7.6%).
+- Flash: 285,557 / 1,310,720 bytes (21.8%).
+
+### N1 — Wi-Fi connection and recovery
+
+- Initial connection to Wi-Fi was confirmed on the physical ESP32.
+- The user confirmed that the Router / Access Point was deliberately switched off and then switched back on for this recovery test.
+- Reported AP-off duration: less than 30 seconds. This is shorter than the guide's recommended 30–60 second test window; repeat for 30–60 seconds to complete the prescribed duration check.
+- In the submitted Serial Monitor log, `ERROR` appears at lines 262 and 324, `CONNECTING` at lines 281 and 349, and `CONNECTED` again at line 386.
+- Sensor and soil/pump status logging continued in the captured output; the shown soil readings were below the configured threshold of 2600 and the reported pump state remained `OFF`.
+- Assessment: recovery after an actual AP interruption is observed. The shorter-than-prescribed interruption is recorded as a test deviation, not silently treated as a full-duration test.
+
+### N1 status
+
+**FUNCTIONAL RECOVERY: PASS (observed). DURATION CHECK: INCOMPLETE.**
+
+Repeat the controlled AP-off test for 30–60 seconds and capture the log from before the AP is switched off until after `CONNECTED` returns. Also complete the five-minute connected stability observation. Do not include SSID, passwords, tokens, or other secrets in submitted logs.
+
 ## Evidence to report
 
 - Build result and firmware identity (build number, commit, environment).
 - Whether CONNECTED appeared.
 - Stability duration.
-- Result of access-point-off/on recovery test.
-- Any relevant log lines, with SSID/password redacted.
+- Result and duration of the access-point-off/on recovery test.
+- Relevant log lines, with SSID/password redacted.
 
 ## Acceptance
 
-Wi-Fi N1 is PASS only after the device connects and a controlled disconnection/recovery test is observed and documented. Until then, mark N1 IN PROGRESS. Phase 31 overall remains OPEN; this test does not claim MQTT or end-to-end telemetry success.
+N1 functional connection/recovery has been observed, but the prescribed recovery-duration and five-minute stability checks are not yet documented as complete. Keep the overall N1 acceptance **IN PROGRESS** until those remaining checks are completed. Phase 31 overall remains **OPEN**; this test does not claim MQTT or end-to-end telemetry success.
