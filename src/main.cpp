@@ -1,5 +1,6 @@
 #ifdef ARDUINO
 #include <Arduino.h>
+#include <WiFi.h>
 #endif
 
 #include <openiot/core.hpp>
@@ -250,6 +251,10 @@ void loop()
             case network::ConnectionState::Connecting: Serial.println("CONNECTING"); break;
             case network::ConnectionState::Connected:
                 Serial.println("CONNECTED");
+                Serial.print("[NETWORK-WIFI] connected_ssid=");
+                Serial.println(::WiFi.SSID());
+                Serial.print("[NETWORK-WIFI] rssi_dbm=");
+                Serial.println(::WiFi.RSSI());
                 break;
             case network::ConnectionState::Error: Serial.println("ERROR"); break;
         }
