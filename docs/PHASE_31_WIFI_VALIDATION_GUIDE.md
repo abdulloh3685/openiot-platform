@@ -2,7 +2,7 @@
 
 ## Scope
 
-This step validates Wi-Fi only, using the existing `platform/network` module and its `openiot::network::WiFi` API. MQTT broker configuration, MQTT credentials, TLS, and telemetry are intentionally out of scope until Wi-Fi has passed.
+This step validates Wi-Fi using the existing `platform/network` module and its `openiot::network::WiFi` API, and adds a lightweight board-uptime diagnostic to Serial Monitor. MQTT broker configuration, MQTT credentials, TLS, and telemetry are intentionally out of scope until Wi-Fi has passed.
 
 ## Security
 
@@ -21,11 +21,14 @@ This step validates Wi-Fi only, using the existing `platform/network` module and
 3. Use a 2.4 GHz Wi-Fi network and ensure its credentials are correct.
 4. Build and upload the existing `esp32dev` environment, then open Serial Monitor at 115200 baud.
 5. Confirm the log contains `[NETWORK-WIFI] state=CONNECTED`, followed by `connected_ssid=...` and `rssi_dbm=...`.
+6. Confirm `[BOARD-STATUS] uptime=...` appears immediately after startup and then approximately once per minute. The uptime counts from the current boot and resets after a reboot or power cycle.
+
 6. Leave the device running for at least 5 minutes. Record any DOWN / CONNECTING / ERROR / CONNECTED transitions.
 7. For a recovery test, temporarily turn off the Wi-Fi access point for 30–60 seconds, turn it back on, and observe whether the log returns to CONNECTED. Do not disconnect the ESP32 hardware or change relay wiring for this test.
 
 ## Expected logs
 
+- `[BOARD-STATUS] uptime=2d 5h 32m 18s`: time elapsed since this boot, reported approximately once per minute. The implementation extends the 32-bit `millis()` delta into a 64-bit counter so the displayed days can continue across the usual `millis()` wrap.
 - `[NETWORK-WIFI] config ErrorCode=0`: local Wi-Fi configuration accepted.
 - `[NETWORK-WIFI] initial connect result ErrorCode=...`: the initial connection attempt result; a nonzero Busy result may occur while joining.
 - `[NETWORK-WIFI] state=CONNECTING`: association in progress.
