@@ -53,6 +53,7 @@ namespace {
 constexpr std::uint8_t kDht22Pin = 4;
 constexpr std::uint8_t kSoilMoisturePin = 34;
 constexpr std::uint32_t kSensorSampleIntervalMs = 2500;
+constexpr std::uint32_t kUptimeReportIntervalMs = 60000;
 constexpr std::uint8_t kRelayPins[] = {26, 32, 33, 25};
 constexpr std::size_t kSmartFarmingPumpRelayIndex = 0;
 
@@ -239,6 +240,40 @@ void loop()
 #endif
 
     boot.loop();
+
+#ifdef ARDUINO
+    // Extend millis() into a 64-bit uptime counter so the displayed days
+    // continue correctly even when the 32-bit millis() counter wraps.
+    static std::uint32_t last_uptime_tick_ms = 0;
+    static std::uint32_t last_uptime_report_ms = 0;
+    static std::uint64_t uptime_total_ms = 0;
+    const std::uint32_t uptime_now_ms = static_cast<std::uint32_t>(millis());
+    uptime_total_ms += static_cast<std::uint32_t>(uptime_now_ms - last_uptime_tick_ms);
+    last_uptime_tick_ms = uptime_now_ms;
+
+    if (last_uptime_report_ms == 0 ||
+        uptime_now_ms - last_uptime_report_ms >= kUptimeReportIntervalMs) {
+        last_uptime_report_ms = uptime_now_ms;
+        const std::uint64_t uptime_total_seconds = uptime_total_ms / 1000ULL;
+        const std::uint64_t uptime_days = uptime_total_seconds / 86400ULL;
+        const std::uint32_t uptime_hours =
+            static_cast<std::uint32_t>((uptime_total_seconds % 86400ULL) / 3600ULL);
+        const std::uint32_t uptime_minutes =
+            static_cast<std::uint32_t>((uptime_total_seconds % 3600ULL) / 60ULL);
+        const std::uint32_t uptime_seconds =
+            static_cast<std::uint32_t>(uptime_total_seconds % 60ULL);
+
+        Serial.print("[BOARD-STATUS] uptime=");
+        Serial.print(static_cast<unsigned long long>(uptime_days));
+        Serial.print("d ");
+        Serial.print(uptime_hours);
+        Serial.print("h ");
+        Serial.print(uptime_minutes);
+        Serial.print("m ");
+        Serial.print(uptime_seconds);
+        Serial.println("s");
+    }
+#endif
 
 #if OPENIOT_WIFI_SECRETS_AVAILABLE
     wifi.loop();
