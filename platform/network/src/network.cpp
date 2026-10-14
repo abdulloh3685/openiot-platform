@@ -65,10 +65,18 @@ void WiFi::loop() {
         state_ = ConnectionState::Connected;
         return;
     }
+
     if (state_ == ConnectionState::Connected) state_ = ConnectionState::Down;
+
     const auto elapsed = nowMs() - last_attempt_ms_;
-    if (state_ != ConnectionState::Connecting && elapsed >= config_.reconnect_interval_ms) (void)connect();
-    if (state_ == ConnectionState::Connecting && elapsed >= config_.connect_timeout_ms) state_ = ConnectionState::Error;
+    if (state_ == ConnectionState::Connecting) {
+        if (elapsed >= config_.connect_timeout_ms) state_ = ConnectionState::Error;
+        return;
+    }
+
+    // Start a retry and return immediately. Do not use the elapsed time from
+    // before connect() to evaluate the new attempt's timeout in this same loop.
+    if (elapsed >= config_.reconnect_interval_ms) (void)connect();
 #endif
 }
 
@@ -148,13 +156,13 @@ foundation::ErrorCode Mqtt::publish(const char* topic, const char* payload) {
 }
 
 foundation::ErrorCode Mqtt::subscribe(const char* topic) {
-    if (!initialized_) return foundation::ErrorCode::NotInitialized;
-    if (!validString(topic)) return foundation::ErrorCode::InvalidArgument;
-    if (!connected()) return foundation::ErrorCode::InvalidState;
+    if (!initialized_) return ErrorCode::NotInitialized;
+    if (!validString(topic)) return ErrorCode::InvalidArgument;
+    if (!connected()) return ErrorCode::InvalidState;
 #ifdef ARDUINO
-    return mqtt_client.subscribe(topic) ? foundation::ErrorCode::Ok : foundation::ErrorCode::HardwareError;
+    return mqtt_client.subscribe(topic) ? ErrorCode::Ok : ErrorCode::HardwareError;
 #else
-    return foundation::ErrorCode::Ok;
+    return ErrorCode::Ok;
 #endif
 }
 
