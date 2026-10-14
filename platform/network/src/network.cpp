@@ -156,13 +156,13 @@ foundation::ErrorCode Mqtt::publish(const char* topic, const char* payload) {
 }
 
 foundation::ErrorCode Mqtt::subscribe(const char* topic) {
-    if (!initialized_) return ErrorCode::NotInitialized;
-    if (!validString(topic)) return ErrorCode::InvalidArgument;
-    if (!connected()) return ErrorCode::InvalidState;
+    if (!initialized_) return foundation::ErrorCode::NotInitialized;
+    if (!validString(topic)) return foundation::ErrorCode::InvalidArgument;
+    if (!connected()) return foundation::ErrorCode::InvalidState;
 #ifdef ARDUINO
-    return mqtt_client.subscribe(topic) ? ErrorCode::Ok : ErrorCode::HardwareError;
+    return mqtt_client.subscribe(topic) ? foundation::ErrorCode::Ok : foundation::ErrorCode::HardwareError;
 #else
-    return ErrorCode::Ok;
+    return foundation::ErrorCode::Ok;
 #endif
 }
 
