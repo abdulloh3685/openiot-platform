@@ -32,14 +32,15 @@ int main() {
     telemetry.loop();
 
     assert(telemetry.publishCount() == 1);
-    assert(std::strstr(telemetry.lastPayload(), "\"soil_raw\":0") != nullptr);
-    assert(std::strstr(telemetry.lastPayload(), "\"pump_on\":true") != nullptr);
-    assert(std::strstr(telemetry.lastPayload(), "\"samples\":1") != nullptr);
+    assert(std::strstr(telemetry.lastPayload(), "\\"soil_raw\\":0") != nullptr);
+    // The native SoilMoisture stub returns 0; invalid readings must keep the pump OFF.
+    assert(std::strstr(telemetry.lastPayload(), "\\"pump_on\\":false") != nullptr);
+    assert(std::strstr(telemetry.lastPayload(), "\\"samples\\":1") != nullptr);
 
     telemetry.end();
     assert(!telemetry.initialized());
     assert(telemetry.publishCount() == 0);
-    assert(telemetry.lastPayload()[0] == '\0');
+    assert(telemetry.lastPayload()[0] == '\\0');
 
     mqtt.end();
     farming.end();
