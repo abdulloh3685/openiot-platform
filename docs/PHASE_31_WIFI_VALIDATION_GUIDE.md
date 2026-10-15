@@ -22,9 +22,8 @@ This step validates Wi-Fi using the existing `platform/network` module and its `
 4. Build and upload the existing `esp32dev` environment, then open Serial Monitor at 115200 baud.
 5. Confirm the log contains `[NETWORK-WIFI] state=CONNECTED`, followed by `connected_ssid=...` and `rssi_dbm=...`.
 6. Confirm `[BOARD-STATUS] uptime=...` appears immediately after startup and then approximately once per minute. The uptime counts from the current boot and resets after a reboot or power cycle.
-
-6. Leave the device running for at least 5 minutes. Record any DOWN / CONNECTING / ERROR / CONNECTED transitions.
-7. For a recovery test, temporarily turn off the Wi-Fi access point for 30–60 seconds, turn it back on, and observe whether the log returns to CONNECTED. Do not disconnect the ESP32 hardware or change relay wiring for this test.
+7. Leave the device running for at least 5 minutes. Record any DOWN / CONNECTING / ERROR / CONNECTED transitions.
+8. For a recovery test, temporarily turn off the Wi-Fi access point for 30–60 seconds, turn it back on, and observe whether the log returns to CONNECTED. Do not disconnect the ESP32 hardware or change relay wiring for this test.
 
 ## Expected logs
 
@@ -57,11 +56,25 @@ If the log says `DISABLED: local network_secrets.hpp not found`, create the loca
 - Sensor and soil/pump status logging continued in the captured output; the shown soil readings were below the configured threshold of 2600 and the reported pump state remained `OFF`.
 - Assessment: recovery after an actual AP interruption is observed. The shorter-than-prescribed interruption is recorded as a test deviation, not silently treated as a full-duration test.
 
+## Follow-up evidence — 2026-10-15
+
+- The user again confirmed the physical sequence: AP switched off → Wi-Fi disconnected; AP switched back on → device retried and reconnected.
+- The follow-up Serial Monitor excerpt contains repeated `ERROR` → `CONNECTING` cycles, followed by:
+  ```text
+  [NETWORK-WIFI] state=CONNECTED
+  [NETWORK-WIFI] connected_ssid=test2.4G
+  [NETWORK-WIFI] rssi_dbm=-30
+  ```
+- DHT22 and soil/pump logs continue during the retries and after reconnection. The displayed soil ADC readings in this excerpt remain below threshold 2600 and show `pump=OFF`.
+- This corroborates functional reconnect. The excerpt does not state the exact AP-off duration, so it cannot be used as proof of a 30–60 second interruption.
+- The excerpt also does not document a complete five-minute interval of continuous Wi-Fi-connected stability after reconnection.
+- The SSID above is retained here only as the device's local diagnostic output. Redact private network identifiers before publishing logs elsewhere; never record passwords or tokens.
+
 ### N1 status
 
-**FUNCTIONAL RECOVERY: PASS (observed). DURATION CHECK: INCOMPLETE.**
+**FUNCTIONAL RECOVERY: PASS (observed). DURATION CHECK: INCOMPLETE. CONNECTED STABILITY CHECK: INCOMPLETE.**
 
-Repeat the controlled AP-off test for 30–60 seconds and capture the log from before the AP is switched off until after `CONNECTED` returns. Also complete the five-minute connected stability observation. SSID is now printed locally for diagnosis; redact it from any logs shared publicly if it identifies a private network. Never share passwords, tokens, or other secrets.
+The user has confirmed that the physical AP off/on test results in automatic reconnection, and the Serial Monitor shows `ERROR`, `CONNECTING`, and then `CONNECTED`. To complete the prescribed acceptance evidence, capture an AP-off interval of 30–60 seconds and document a five-minute connected stability run. Do not infer either duration from a partial log.
 
 ## Evidence to report
 
@@ -73,4 +86,4 @@ Repeat the controlled AP-off test for 30–60 seconds and capture the log from b
 
 ## Acceptance
 
-N1 functional connection/recovery has been observed, but the prescribed recovery-duration and five-minute stability checks are not yet documented as complete. Keep the overall N1 acceptance **IN PROGRESS** until those remaining checks are completed. Phase 31 overall remains **OPEN**; this test does not claim MQTT or end-to-end telemetry success.
+N1 functional connection/recovery has been observed and is **PASS for functional behavior**. The prescribed recovery-duration and five-minute connected-stability checks are not yet documented as complete. Keep formal N1 acceptance **IN PROGRESS** until those remaining checks are completed. Phase 31 overall remains **OPEN**; this test does not claim MQTT or end-to-end telemetry success.
