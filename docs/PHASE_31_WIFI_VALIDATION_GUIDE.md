@@ -81,4 +81,4 @@ Based on the captured transitions, continued sensor logging, the user's confirma
 
 ## Acceptance
 
-N1 functional connection/recovery has been observed and is **PASS for functional behavior**. The prescribed recovery-duration and five-minute connected-stability checks are not yet documented as complete. Keep formal N1 acceptance **IN PROGRESS** until those remaining checks are completed. Phase 31 overall remains **OPEN**; this test does not claim MQTT or end-to-end telemetry success.
+**N1 physical Wi-Fi validation: PASS** based on the user-confirmed 30–60 second AP-off interval and the captured post-reconnect stability log. Initial connection, disconnect detection, retry/recovery, and continued sensor logging were observed. Phase 31 overall remains **OPEN** because MQTT, TLS, and end-to-end telemetry are outside this validation scope and have not been claimed as tested.
