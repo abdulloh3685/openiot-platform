@@ -56,25 +56,20 @@ If the log says `DISABLED: local network_secrets.hpp not found`, create the loca
 - Sensor and soil/pump status logging continued in the captured output; the shown soil readings were below the configured threshold of 2600 and the reported pump state remained `OFF`.
 - Assessment: recovery after an actual AP interruption is observed. The shorter-than-prescribed interruption is recorded as a test deviation, not silently treated as a full-duration test.
 
-## Follow-up evidence — 2026-10-15
+## Follow-up evidence — 2026-10-15 (captured Serial Monitor log)
 
-- The user again confirmed the physical sequence: AP switched off → Wi-Fi disconnected; AP switched back on → device retried and reconnected.
-- The follow-up Serial Monitor excerpt contains repeated `ERROR` → `CONNECTING` cycles, followed by:
-  ```text
-  [NETWORK-WIFI] state=CONNECTED
-  [NETWORK-WIFI] connected_ssid=test2.4G
-  [NETWORK-WIFI] rssi_dbm=-30
-  ```
-- DHT22 and soil/pump logs continue during the retries and after reconnection. The displayed soil ADC readings in this excerpt remain below threshold 2600 and show `pump=OFF`.
-- This corroborates functional reconnect. The excerpt does not state the exact AP-off duration, so it cannot be used as proof of a 30–60 second interruption.
-- The excerpt also does not document a complete five-minute interval of continuous Wi-Fi-connected stability after reconnection.
-- The SSID above is retained here only as the device's local diagnostic output. Redact private network identifiers before publishing logs elsewhere; never record passwords or tokens.
+- The user confirmed that the AP was physically switched off for the interruption interval and then switched back on.
+- The captured log shows the Wi-Fi transition to `CONNECTING` at approximately 14:30:42, repeated `ERROR` / retry states, and successful `CONNECTED` at approximately 14:32:25. The 1 minute 43 second interval is the observed recovery window; it is **not** treated as the AP-off duration.
+- The user separately confirmed that the AP-off duration was within the intended 30–60 second window.
+- After reconnection, the log continues through approximately 14:43:53 without another Wi-Fi state transition. This provides more than five minutes of observed post-reconnect connected stability (approximately 11 minutes 28 seconds from the reconnection log entry to the end of capture).
+- DHT22 and soil/pump logging continued through the disconnect/retry/reconnect sequence. At the end of the capture, the displayed soil reading remained below threshold 2600 and the pump was `OFF`.
+- Evidence file: `device-monitor-261015-142926.log` (local test capture). Avoid publishing private network identifiers; never record passwords or tokens.
 
 ### N1 status
 
-**FUNCTIONAL RECOVERY: PASS (observed). DURATION CHECK: INCOMPLETE. CONNECTED STABILITY CHECK: INCOMPLETE.**
+**FUNCTIONAL RECOVERY: PASS. AP-OFF DURATION: PASS (user-confirmed 30–60 seconds). POST-RECONNECT STABILITY: PASS (>5 minutes observed in the log).**
 
-The user has confirmed that the physical AP off/on test results in automatic reconnection, and the Serial Monitor shows `ERROR`, `CONNECTING`, and then `CONNECTED`. To complete the prescribed acceptance evidence, capture an AP-off interval of 30–60 seconds and document a five-minute connected stability run. Do not infer either duration from a partial log.
+Based on the captured transitions, continued sensor logging, the user's confirmation of the AP-off duration, and the sustained post-reconnect log, the prescribed N1 physical validation checks are now documented as complete. Phase 31 overall remains **OPEN**; this result does not claim MQTT or end-to-end telemetry success.
 
 ## Evidence to report
 
