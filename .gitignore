@@ -1,0 +1,3 @@
+# Local credentials and device-specific configuration
+platform/network/include/openiot/network_secrets.hpp
+platform/network/include/openiot/network_secrets.h

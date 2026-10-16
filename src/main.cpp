@@ -1,11 +1,20 @@
 #ifdef ARDUINO
 #include <Arduino.h>
+#include <WiFi.h>
 #endif
 
 #include <openiot/core.hpp>
 #include <openiot/drivers.hpp>
 #include <openiot/hal.hpp>
+#include <openiot/network.hpp>
 #include <openiot/smart_farming.hpp>
+
+#if defined(ARDUINO) && __has_include(<openiot/network_secrets.hpp>)
+#include <openiot/network_secrets.hpp>
+#define OPENIOT_WIFI_SECRETS_AVAILABLE 1
+#else
+#define OPENIOT_WIFI_SECRETS_AVAILABLE 0
+#endif
 
 #ifndef OPENIOT_BUILD_NUMBER
 #define OPENIOT_BUILD_NUMBER 0
@@ -35,6 +44,7 @@ static core::BootManager boot(logger, event_bus, scheduler, config, device);
 static hal::Gpio gpio;
 static hal::Adc adc;
 static hal::Pwm pwm;
+static network::WiFi wifi;
 static drivers::Dht22 dht22;
 static drivers::SoilMoisture soil_moisture;
 static drivers::Relay relay_channels[4];
@@ -43,6 +53,7 @@ namespace {
 constexpr std::uint8_t kDht22Pin = 4;
 constexpr std::uint8_t kSoilMoisturePin = 34;
 constexpr std::uint32_t kSensorSampleIntervalMs = 2500;
+constexpr std::uint32_t kUptimeReportIntervalMs = 60000;
 constexpr std::uint8_t kRelayPins[] = {26, 32, 33, 25};
 constexpr std::size_t kSmartFarmingPumpRelayIndex = 0;
 
@@ -92,6 +103,24 @@ void setup()
     Serial.println("============================================================");
     Serial.println("[BOOT-01] setup entered");
     Serial.println("[BOOT-02] before boot.begin()");
+#endif
+
+#ifdef ARDUINO
+#if OPENIOT_WIFI_SECRETS_AVAILABLE
+    const foundation::ErrorCode wifi_config_result =
+        wifi.begin(OPENIOT_WIFI_SSID, OPENIOT_WIFI_PASSWORD);
+    Serial.print("[NETWORK-WIFI] config ErrorCode=");
+    Serial.println(static_cast<unsigned int>(wifi_config_result));
+    if (wifi_config_result == foundation::ErrorCode::Ok) {
+        const foundation::ErrorCode wifi_connect_result = wifi.connect();
+        Serial.print("[NETWORK-WIFI] initial connect result ErrorCode=");
+        Serial.println(static_cast<unsigned int>(wifi_connect_result));
+        Serial.println("[NETWORK-WIFI] waiting for Wi-Fi; no MQTT broker configured");
+    }
+#else
+    Serial.println("[NETWORK-WIFI] DISABLED: local network_secrets.hpp not found");
+    Serial.println("[NETWORK-WIFI] copy network_secrets.example.hpp to network_secrets.hpp and set local Wi-Fi credentials");
+#endif
 #endif
 
     const foundation::ErrorCode boot_result = boot.begin();
@@ -211,6 +240,61 @@ void loop()
 #endif
 
     boot.loop();
+
+#ifdef ARDUINO
+    // Extend millis() into a 64-bit uptime counter so the displayed days
+    // continue correctly even when the 32-bit millis() counter wraps.
+    static std::uint32_t last_uptime_tick_ms = 0;
+    static std::uint32_t last_uptime_report_ms = 0;
+    static std::uint64_t uptime_total_ms = 0;
+    const std::uint32_t uptime_now_ms = static_cast<std::uint32_t>(millis());
+    uptime_total_ms += static_cast<std::uint32_t>(uptime_now_ms - last_uptime_tick_ms);
+    last_uptime_tick_ms = uptime_now_ms;
+
+    if (last_uptime_report_ms == 0 ||
+        uptime_now_ms - last_uptime_report_ms >= kUptimeReportIntervalMs) {
+        last_uptime_report_ms = uptime_now_ms;
+        const std::uint64_t uptime_total_seconds = uptime_total_ms / 1000ULL;
+        const std::uint64_t uptime_days = uptime_total_seconds / 86400ULL;
+        const std::uint32_t uptime_hours =
+            static_cast<std::uint32_t>((uptime_total_seconds % 86400ULL) / 3600ULL);
+        const std::uint32_t uptime_minutes =
+            static_cast<std::uint32_t>((uptime_total_seconds % 3600ULL) / 60ULL);
+        const std::uint32_t uptime_seconds =
+            static_cast<std::uint32_t>(uptime_total_seconds % 60ULL);
+
+        Serial.print("[BOARD-STATUS] uptime=");
+        Serial.print(static_cast<unsigned long long>(uptime_days));
+        Serial.print("d ");
+        Serial.print(uptime_hours);
+        Serial.print("h ");
+        Serial.print(uptime_minutes);
+        Serial.print("m ");
+        Serial.print(uptime_seconds);
+        Serial.println("s");
+    }
+#endif
+
+#if OPENIOT_WIFI_SECRETS_AVAILABLE
+    wifi.loop();
+    static network::ConnectionState last_wifi_state = network::ConnectionState::Error;
+    if (wifi.state() != last_wifi_state) {
+        last_wifi_state = wifi.state();
+        Serial.print("[NETWORK-WIFI] state=");
+        switch (last_wifi_state) {
+            case network::ConnectionState::Down: Serial.println("DOWN"); break;
+            case network::ConnectionState::Connecting: Serial.println("CONNECTING"); break;
+            case network::ConnectionState::Connected:
+                Serial.println("CONNECTED");
+                Serial.print("[NETWORK-WIFI] connected_ssid=");
+                Serial.println(::WiFi.SSID());
+                Serial.print("[NETWORK-WIFI] rssi_dbm=");
+                Serial.println(::WiFi.RSSI());
+                break;
+            case network::ConnectionState::Error: Serial.println("ERROR"); break;
+        }
+    }
+#endif
 
 #ifdef ARDUINO
     Serial.println("[BOOT-05] boot.loop() returned");
