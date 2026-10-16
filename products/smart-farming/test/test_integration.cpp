@@ -61,7 +61,8 @@ int main() {
     assert(sensor_events == 1000);
     assert(telemetry.publishCount() == 1000);
     assert(std::strstr(telemetry.lastPayload(), "\"soil_raw\":0") != nullptr);
-    assert(std::strstr(telemetry.lastPayload(), "\"pump_on\":true") != nullptr);
+    // The native SoilMoisture stub returns 0; invalid readings must keep the pump OFF.
+    assert(std::strstr(telemetry.lastPayload(), "\"pump_on\":false") != nullptr);
 
     mqtt.simulateConnected(false);
     const auto published_before_loss = telemetry.publishCount();
