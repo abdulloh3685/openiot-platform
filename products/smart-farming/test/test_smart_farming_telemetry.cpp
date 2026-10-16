@@ -33,7 +33,8 @@ int main() {
 
     assert(telemetry.publishCount() == 1);
     assert(std::strstr(telemetry.lastPayload(), "\"soil_raw\":0") != nullptr);
-    assert(std::strstr(telemetry.lastPayload(), "\"pump_on\":true") != nullptr);
+    // The native SoilMoisture stub returns 0; invalid readings must keep the pump OFF.
+    assert(std::strstr(telemetry.lastPayload(), "\"pump_on\":false") != nullptr);
     assert(std::strstr(telemetry.lastPayload(), "\"samples\":1") != nullptr);
 
     telemetry.end();
