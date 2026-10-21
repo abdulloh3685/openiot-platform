@@ -65,10 +65,18 @@ void WiFi::loop() {
         state_ = ConnectionState::Connected;
         return;
     }
+
     if (state_ == ConnectionState::Connected) state_ = ConnectionState::Down;
+
     const auto elapsed = nowMs() - last_attempt_ms_;
-    if (state_ != ConnectionState::Connecting && elapsed >= config_.reconnect_interval_ms) (void)connect();
-    if (state_ == ConnectionState::Connecting && elapsed >= config_.connect_timeout_ms) state_ = ConnectionState::Error;
+    if (state_ == ConnectionState::Connecting) {
+        if (elapsed >= config_.connect_timeout_ms) state_ = ConnectionState::Error;
+        return;
+    }
+
+    // Start a retry and return immediately. Do not use the elapsed time from
+    // before connect() to evaluate the new attempt's timeout in this same loop.
+    if (elapsed >= config_.reconnect_interval_ms) (void)connect();
 #endif
 }
 
