@@ -303,4 +303,4 @@ CI success proves only the jobs and steps that ran on the referenced commit. It 
 ### Related pull requests
 
 - PR #14 — portable VS Code configuration cleanup: https://github.com/abdulloh3685/openiot-platform/pull/14 (CI run #119 passed; PR remains open and unmerged at the time this note was written).
-- PR #13 — PlatformIO platform pinning: https://github.com/abdulloh3685/openiot-platform/pull/13 (still open/draft and reported non-mergeable at the time of review). The current `main` already contains `platform = espressif32@6.10.0`, `lib_ldf_mode = deep+`, and the invalid-soil telemetry expectations; compare the branch against current `main` before deciding whether this PR should be closed as redundant. Do not merge a stale or conflicting branch just to close the task.
+- PR #13 — PlatformIO platform pinning: https://github.com/abdulloh3685/openiot-platform/pull/13 (closed without merge on 2026-10-22 after comparison showed its changes already present on `main`; the branch was 21 commits behind and diverged). No source changes were removed from `main` by closing this PR.
