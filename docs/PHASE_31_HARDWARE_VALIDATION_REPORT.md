@@ -268,3 +268,39 @@ The control revision must be built and then physically validated against real so
 10. Record the physical result and then continue Wi-Fi/MQTT/stability validation.
 
 No new architecture, PKG, or Phase is created by this control revision.
+
+## 10. CI Evidence and Phase Closure Checklist
+
+### CI evidence recorded on 2026-10-22
+
+- [PASS] GitHub Actions workflow run #119 completed successfully for PR #14.
+- [PASS] Native job: Native build, Core, HAL, Driver, Network, Smart Farming, telemetry, and integration/stress smoke tests all completed with success.
+- [PASS] ESP32 job: ESP32 build completed with success.
+- Workflow run: https://github.com/abdulloh3685/openiot-platform/actions/runs/39705818230
+- PR reviewed: https://github.com/abdulloh3685/openiot-platform/pull/14
+- This run validates the PR #14 head commit `e3304fdd93875ec15938b48a8f84fb4f8920ac82`; it is not a claim that every historical Phase 31 commit or every physical behavior was tested by CI.
+
+### Acceptance matrix
+
+| Area | Current recorded status | Evidence / remaining action |
+|---|---|---|
+| Hardware wiring and sensor sampling | PASS per recorded physical test | Sections 2–4 |
+| Relay polarity and safe startup | PASS per recorded physical test | Section 3 |
+| Soil calibration baseline and invalid-reading fail-safe | Baseline documented; revalidate on final firmware | Sections 5–7; capture final firmware identity and control logs |
+| Wi-Fi connect / recovery / post-reconnect stability | PASS per N1 report | `docs/PHASE_31_WIFI_VALIDATION_GUIDE.md`; physical log described there |
+| Native automated tests | PASS for CI run #119 | Workflow run linked above |
+| ESP32 compilation | PASS for CI run #119 | Workflow run linked above |
+| MQTT broker connection on physical device | NOT YET ACCEPTED | Capture broker connection result and redacted serial log |
+| MQTT authentication and TLS | NOT YET ACCEPTED | Define the intended broker/security configuration, then validate without committing credentials |
+| End-to-end sensor telemetry | NOT YET ACCEPTED | Verify real sensor sample reaches the intended MQTT topic and payload; capture broker-side evidence |
+| Final firmware identity on the device | PENDING for final acceptance | Record Product, Version, Build, Git Commit, Git State, Build Date/Time, PlatformIO Environment, and Board for the exact tested firmware |
+| Final Phase 31 closure | OPEN | Close only after the pending physical acceptance evidence is attached and reviewed |
+
+### Closure rule
+
+CI success proves only the jobs and steps that ran on the referenced commit. It does not substitute for physical MQTT/TLS/telemetry validation. Do not mark Phase 31 fully closed until the remaining acceptance rows are supported by captured evidence. Never commit Wi-Fi passwords, MQTT credentials, tokens, or private network identifiers.
+
+### Related pull requests
+
+- PR #14 — portable VS Code configuration cleanup: https://github.com/abdulloh3685/openiot-platform/pull/14 (CI run #119 passed; PR remains open and unmerged at the time this note was written).
+- PR #13 — PlatformIO platform pinning: https://github.com/abdulloh3685/openiot-platform/pull/13 (still open/draft and reported non-mergeable at the time of review). The current `main` already contains `platform = espressif32@6.10.0`, `lib_ldf_mode = deep+`, and the invalid-soil telemetry expectations; compare the branch against current `main` before deciding whether this PR should be closed as redundant. Do not merge a stale or conflicting branch just to close the task.
