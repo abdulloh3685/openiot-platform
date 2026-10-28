@@ -47,6 +47,11 @@ struct MqttConfig {
     const char* host{nullptr};
     std::uint16_t port{0};
     std::uint32_t reconnect_interval_ms{5000};
+    const char* client_id{nullptr};
+    const char* username{nullptr};
+    const char* password{nullptr};
+    bool tls_enabled{false};
+    const char* ca_certificate_pem{nullptr};
 };
 
 class Mqtt {
