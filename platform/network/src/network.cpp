@@ -7,6 +7,7 @@
 #ifdef ARDUINO
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <WiFiClientSecure.h>
 #endif
 
 namespace openiot::network {
@@ -99,7 +100,10 @@ void WiFi::simulateConnected(bool connected) {
 #ifdef ARDUINO
 namespace {
 WiFiClient mqtt_wifi_client;
-PubSubClient mqtt_client(mqtt_wifi_client);
+WiFiClientSecure mqtt_tls_client;
+PubSubClient mqtt_plain_client(mqtt_wifi_client);
+PubSubClient mqtt_tls_client_adapter(mqtt_tls_client);
+PubSubClient* mqtt_client = &mqtt_plain_client;
 }
 #endif
 
@@ -112,12 +116,17 @@ foundation::ErrorCode Mqtt::begin(const char* host, std::uint16_t port) {
 
 foundation::ErrorCode Mqtt::begin(const MqttConfig& config) {
     if (!validString(config.host) || config.port == 0 || config.reconnect_interval_ms == 0) return foundation::ErrorCode::InvalidArgument;
+    if (config.tls_enabled && !validString(config.ca_certificate_pem)) return foundation::ErrorCode::InvalidArgument;
+    if ((config.username == nullptr) != (config.password == nullptr)) return foundation::ErrorCode::InvalidArgument;
+    if (config.username != nullptr && (!validString(config.username) || !validString(config.password))) return foundation::ErrorCode::InvalidArgument;
     config_ = config;
     initialized_ = true;
     state_ = ConnectionState::Down;
     last_attempt_ms_ = 0;
 #ifdef ARDUINO
-    mqtt_client.setServer(config_.host, config_.port);
+    mqtt_client = config_.tls_enabled ? &mqtt_tls_client_adapter : &mqtt_plain_client;
+    if (config_.tls_enabled) mqtt_tls_client.setCACert(config_.ca_certificate_pem);
+    mqtt_client->setServer(config_.host, config_.port);
 #endif
     return foundation::ErrorCode::Ok;
 }
@@ -131,7 +140,11 @@ foundation::ErrorCode Mqtt::connect() {
     }
     state_ = ConnectionState::Connecting;
     last_attempt_ms_ = nowMs();
-    if (mqtt_client.connect("openiot-node")) {
+    const char* client_id = validString(config_.client_id) ? config_.client_id : "openiot-node";
+    const bool connected = config_.username != nullptr
+        ? mqtt_client->connect(client_id, config_.username, config_.password)
+        : mqtt_client->connect(client_id);
+    if (connected) {
         state_ = ConnectionState::Connected;
         return foundation::ErrorCode::Ok;
     }
@@ -149,7 +162,7 @@ foundation::ErrorCode Mqtt::publish(const char* topic, const char* payload) {
     if (!validString(topic) || payload == nullptr || payload[0] == '\0') return foundation::ErrorCode::InvalidArgument;
     if (!connected()) return foundation::ErrorCode::InvalidState;
 #ifdef ARDUINO
-    return mqtt_client.publish(topic, payload) ? foundation::ErrorCode::Ok : foundation::ErrorCode::HardwareError;
+    return mqtt_client->publish(topic, payload) ? foundation::ErrorCode::Ok : foundation::ErrorCode::HardwareError;
 #else
     return foundation::ErrorCode::Ok;
 #endif
@@ -160,7 +173,7 @@ foundation::ErrorCode Mqtt::subscribe(const char* topic) {
     if (!validString(topic)) return foundation::ErrorCode::InvalidArgument;
     if (!connected()) return foundation::ErrorCode::InvalidState;
 #ifdef ARDUINO
-    return mqtt_client.subscribe(topic) ? foundation::ErrorCode::Ok : foundation::ErrorCode::HardwareError;
+    return mqtt_client->subscribe(topic) ? foundation::ErrorCode::Ok : foundation::ErrorCode::HardwareError;
 #else
     return foundation::ErrorCode::Ok;
 #endif
@@ -169,20 +182,20 @@ foundation::ErrorCode Mqtt::subscribe(const char* topic) {
 void Mqtt::loop() {
     if (!initialized_) return;
 #ifdef ARDUINO
-    if (!mqtt_client.connected()) {
+    if (!mqtt_client->connected()) {
         if (state_ == ConnectionState::Connected) state_ = ConnectionState::Down;
         const auto elapsed = nowMs() - last_attempt_ms_;
         if (elapsed >= config_.reconnect_interval_ms) (void)connect();
         return;
     }
     state_ = ConnectionState::Connected;
-    mqtt_client.loop();
+    mqtt_client->loop();
 #endif
 }
 
 void Mqtt::end() {
 #ifdef ARDUINO
-    mqtt_client.disconnect();
+    mqtt_client->disconnect();
 #endif
     initialized_ = false;
     state_ = ConnectionState::Down;
