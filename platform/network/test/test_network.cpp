@@ -30,12 +30,26 @@ int main() {
     tls_config.tls_enabled = true;
     assert(mqtt.begin(tls_config) == ErrorCode::InvalidArgument);
 
+    MqttConfig tls_config_valid{};
+    tls_config_valid.host = "broker";
+    tls_config_valid.port = 8883;
+    tls_config_valid.tls_enabled = true;
+    tls_config_valid.ca_certificate_pem = "test-ca-certificate";
+    assert(mqtt.begin(tls_config_valid) == ErrorCode::Ok);
+    mqtt.end();
     MqttConfig auth_config{};
     auth_config.host = "broker";
     auth_config.port = 1883;
     auth_config.username = "user";
     assert(mqtt.begin(auth_config) == ErrorCode::InvalidArgument);
 
+    MqttConfig auth_config_valid{};
+    auth_config_valid.host = "broker";
+    auth_config_valid.port = 1883;
+    auth_config_valid.username = "user";
+    auth_config_valid.password = "password";
+    assert(mqtt.begin(auth_config_valid) == ErrorCode::Ok);
+    mqtt.end();
     assert(mqtt.begin("broker", 1883) == ErrorCode::Ok);
     assert(mqtt.publish("topic", "payload") == ErrorCode::InvalidState);
     mqtt.simulateConnected(true);
