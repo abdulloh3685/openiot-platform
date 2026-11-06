@@ -8,6 +8,7 @@
 #include <openiot/hal.hpp>
 #include <openiot/network.hpp>
 #include <openiot/smart_farming.hpp>
+#include <openiot/smart_farming_telemetry.hpp>
 
 #if defined(ARDUINO) && __has_include(<openiot/network_secrets.hpp>)
 #include <openiot/network_secrets.hpp>
@@ -45,6 +46,7 @@ static hal::Gpio gpio;
 static hal::Adc adc;
 static hal::Pwm pwm;
 static network::WiFi wifi;
+static network::Mqtt mqtt;
 static drivers::Dht22 dht22;
 static drivers::SoilMoisture soil_moisture;
 static drivers::Relay relay_channels[4];
@@ -67,6 +69,8 @@ void onSmartFarmingSensorEvent(const core::Event& event) {
 
 static products::SmartFarming smart_farming(
     event_bus, soil_moisture, relay_channels[kSmartFarmingPumpRelayIndex]);
+static products::SmartFarmingTelemetry telemetry(
+    smart_farming, mqtt, "openiot/smart-farming/node1/telemetry");
 
 void setup()
 {
@@ -115,11 +119,36 @@ void setup()
         const foundation::ErrorCode wifi_connect_result = wifi.connect();
         Serial.print("[NETWORK-WIFI] initial connect result ErrorCode=");
         Serial.println(static_cast<unsigned int>(wifi_connect_result));
-        Serial.println("[NETWORK-WIFI] waiting for Wi-Fi; no MQTT broker configured");
+        Serial.println("[NETWORK-WIFI] waiting for Wi-Fi; MQTT TLS configuration follows");
     }
 #else
     Serial.println("[NETWORK-WIFI] DISABLED: local network_secrets.hpp not found");
     Serial.println("[NETWORK-WIFI] copy network_secrets.example.hpp to network_secrets.hpp and set local Wi-Fi credentials");
+#endif
+#endif
+
+#if OPENIOT_WIFI_SECRETS_AVAILABLE
+#if defined(OPENIOT_MQTT_CA_CERTIFICATE_PEM)
+    network::MqttConfig mqtt_config{};
+    mqtt_config.host = OPENIOT_MQTT_HOST;
+    mqtt_config.port = OPENIOT_MQTT_PORT;
+    mqtt_config.reconnect_interval_ms = 5000;
+    mqtt_config.client_id = "openiot-smart-farming-node1";
+    mqtt_config.username = OPENIOT_MQTT_USERNAME;
+    mqtt_config.password = OPENIOT_MQTT_PASSWORD;
+    mqtt_config.tls_enabled = true;
+    mqtt_config.ca_certificate_pem = OPENIOT_MQTT_CA_CERTIFICATE_PEM;
+
+    const foundation::ErrorCode mqtt_result = mqtt.begin(mqtt_config);
+    Serial.print("[NETWORK-MQTT] begin ErrorCode=");
+    Serial.println(static_cast<unsigned int>(mqtt_result));
+    if (mqtt_result == foundation::ErrorCode::Ok) {
+        Serial.println("[NETWORK-MQTT] TLS configuration initialized");
+    } else {
+        Serial.println("[NETWORK-MQTT] initialization FAILED");
+    }
+#else
+    Serial.println("[NETWORK-MQTT] DISABLED: CA certificate not configured; TLS will not be bypassed");
 #endif
 #endif
 
@@ -215,7 +244,20 @@ void setup()
         Serial.print("[SMART-FARMING] begin ErrorCode=");
         Serial.println(static_cast<unsigned int>(farming_result));
 #endif
-        if (farming_result != foundation::ErrorCode::Ok) {
+        if (farming_result == foundation::ErrorCode::Ok) {
+            if (mqtt.initialized()) {
+                const foundation::ErrorCode telemetry_result = telemetry.begin();
+#ifdef ARDUINO
+                Serial.print("[SMART-FARMING-TELEMETRY] begin ErrorCode=");
+                Serial.println(static_cast<unsigned int>(telemetry_result));
+#endif
+                if (telemetry_result != foundation::ErrorCode::Ok) {
+                    logger.error("Smart Farming Telemetry initialization FAILED");
+                }
+            } else {
+                logger.info("Smart Farming Telemetry waiting for MQTT TLS configuration");
+            }
+        } else {
             logger.error("Smart Farming initialization FAILED");
         }
     } else {
@@ -297,6 +339,24 @@ void loop()
 #endif
 
 #ifdef ARDUINO
+#if OPENIOT_WIFI_SECRETS_AVAILABLE
+    if (mqtt.initialized()) {
+        mqtt.loop();
+
+        static network::ConnectionState last_mqtt_state =
+            network::ConnectionState::Error;
+        if (mqtt.state() != last_mqtt_state) {
+            last_mqtt_state = mqtt.state();
+            Serial.print("[NETWORK-MQTT] state=");
+            switch (last_mqtt_state) {
+                case network::ConnectionState::Down: Serial.println("DOWN"); break;
+                case network::ConnectionState::Connecting: Serial.println("CONNECTING"); break;
+                case network::ConnectionState::Connected: Serial.println("CONNECTED"); break;
+                case network::ConnectionState::Error: Serial.println("ERROR"); break;
+            }
+        }
+    }
+#endif
     Serial.println("[BOOT-05] boot.loop() returned");
 #endif
 
@@ -336,6 +396,23 @@ void loop()
         Serial.print(smart_farming.threshold());
         Serial.print(" pump=");
         Serial.println(smart_farming.pumpOn() ? "ON" : "OFF");
+    }
+
+    static std::uint32_t last_telemetry_publish_ms = 0;
+    static constexpr std::uint32_t kTelemetryPublishIntervalMs = 10000;
+    const std::uint32_t telemetry_now_ms = static_cast<std::uint32_t>(millis());
+    if (telemetry.initialized() &&
+        telemetry_now_ms - last_telemetry_publish_ms >=
+            kTelemetryPublishIntervalMs) {
+        last_telemetry_publish_ms = telemetry_now_ms;
+        const std::uint32_t publish_count_before = telemetry.publishCount();
+        telemetry.loop();
+        if (telemetry.publishCount() > publish_count_before) {
+            Serial.print("[TELEMETRY] published count=");
+            Serial.print(telemetry.publishCount());
+            Serial.print(" payload=");
+            Serial.println(telemetry.lastPayload());
+        }
     }
 
     Serial.println("[BOOT-LOGGER] Logger loop validation completed");

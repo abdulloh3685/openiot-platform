@@ -1,11 +1,13 @@
 #include <cassert>
 #include <cstring>
 #include <openiot/network.hpp>
+#include <openiot/isrgrootx1.hpp>
 
 using openiot::foundation::ErrorCode;
 using openiot::network::ConnectionState;
 using openiot::network::Json;
 using openiot::network::Mqtt;
+using openiot::network::MqttConfig;
 using openiot::network::WiFi;
 
 int main() {
@@ -20,9 +22,38 @@ int main() {
     wifi.end();
     assert(!wifi.initialized());
 
+    assert(std::strstr(openiot::network::kIsrgRootX1Pem, "-----BEGIN CERTIFICATE-----") != nullptr);
+    assert(std::strstr(openiot::network::kIsrgRootX1Pem, "-----END CERTIFICATE-----") != nullptr);
+
     Mqtt mqtt;
     assert(mqtt.publish("topic", "payload") == ErrorCode::NotInitialized);
     assert(mqtt.begin(nullptr, 1883) == ErrorCode::InvalidArgument);
+    MqttConfig tls_config{};
+    tls_config.host = "broker";
+    tls_config.port = 8883;
+    tls_config.tls_enabled = true;
+    assert(mqtt.begin(tls_config) == ErrorCode::InvalidArgument);
+
+    MqttConfig tls_config_valid{};
+    tls_config_valid.host = "broker";
+    tls_config_valid.port = 8883;
+    tls_config_valid.tls_enabled = true;
+    tls_config_valid.ca_certificate_pem = "test-ca-certificate";
+    assert(mqtt.begin(tls_config_valid) == ErrorCode::Ok);
+    mqtt.end();
+    MqttConfig auth_config{};
+    auth_config.host = "broker";
+    auth_config.port = 1883;
+    auth_config.username = "user";
+    assert(mqtt.begin(auth_config) == ErrorCode::InvalidArgument);
+
+    MqttConfig auth_config_valid{};
+    auth_config_valid.host = "broker";
+    auth_config_valid.port = 1883;
+    auth_config_valid.username = "user";
+    auth_config_valid.password = "password";
+    assert(mqtt.begin(auth_config_valid) == ErrorCode::Ok);
+    mqtt.end();
     assert(mqtt.begin("broker", 1883) == ErrorCode::Ok);
     assert(mqtt.publish("topic", "payload") == ErrorCode::InvalidState);
     mqtt.simulateConnected(true);
