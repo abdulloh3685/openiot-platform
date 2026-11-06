@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstring>
 #include <openiot/network.hpp>
+#include <openiot/isrgrootx1.hpp>
 
 using openiot::foundation::ErrorCode;
 using openiot::network::ConnectionState;
@@ -20,6 +21,9 @@ int main() {
     assert(wifi.connected());
     wifi.end();
     assert(!wifi.initialized());
+
+    assert(std::strstr(openiot::network::kIsrgRootX1Pem, "-----BEGIN CERTIFICATE-----") != nullptr);
+    assert(std::strstr(openiot::network::kIsrgRootX1Pem, "-----END CERTIFICATE-----") != nullptr);
 
     Mqtt mqtt;
     assert(mqtt.publish("topic", "payload") == ErrorCode::NotInitialized);
