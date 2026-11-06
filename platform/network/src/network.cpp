@@ -136,6 +136,7 @@ foundation::ErrorCode Mqtt::connect() {
 #ifdef ARDUINO
     if (::WiFi.status() != WL_CONNECTED) {
         state_ = ConnectionState::Down;
+        last_attempt_ms_ = nowMs();
         return foundation::ErrorCode::InvalidState;
     }
     state_ = ConnectionState::Connecting;
