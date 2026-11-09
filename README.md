@@ -4,7 +4,7 @@ Modular, hardware-independent IoT framework with an ESP32-first implementation p
 
 ## Current status
 
-**Re-implementation v0.1.0 — Phase 30 CLOSED / Phase 31 Physical Validation PREPARATION**
+**Re-implementation v0.1.0 — Phase 30 CLOSED / Phase 31 OPEN (Wi-Fi N1 accepted; MQTT/TLS physical verification pending)**
 
 This repository is the engineering source of truth for the new implementation line. Historical source recovery was formally closed before this implementation began.
 
@@ -60,8 +60,8 @@ The source in this repository is **RE-IMPLEMENTED / NEW SOURCE**. It is not repr
 
 Phase 30 — Integration & Stress Validation: **CLOSED / PASS**
 
-Phase 31 — Physical ESP32 / Smart Farming Field Validation: **PREPARATION / HARDWARE EVIDENCE GATE**
+Phase 31 — Physical ESP32 / Smart Farming Field Validation: **OPEN** — Wi-Fi N1 physical validation accepted; MQTT/TLS connection and end-to-end telemetry evidence remain pending.
 
 Physical validation is not inferred from CI. Real-board, sensor, actuator, Wi-Fi, MQTT, safety, and stability claims require evidence from the physical test setup.
 
-See `docs/PHASE_30_FINAL_STATUS.md`, `docs/PHASE_31_FIELD_VALIDATION_CONTRACT.md`, `docs/PROVENANCE.md`, and `docs/ENGINEERING_DECISIONS.md`.
+See `docs/PROJECT_PROGRESS.md` for the current evidence-based progress snapshot, plus `docs/PHASE_30_FINAL_STATUS.md`, `docs/PHASE_31_FIELD_VALIDATION_CONTRACT.md`, `docs/PROVENANCE.md`, and `docs/ENGINEERING_DECISIONS.md`.
